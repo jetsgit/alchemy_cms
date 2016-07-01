@@ -77,7 +77,7 @@ WARN
       if request.xhr?
         respond_to do |format|
           format.js do
-            render text: flash.discard(:warning), status: 403
+            render plain: flash.discard(:warning), status: 403
           end
           format.html do
             render partial: 'alchemy/admin/partials/flash',
