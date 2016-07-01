@@ -40,9 +40,9 @@ group :development, :test do
 end
 
 # We need this if we want to start the dummy app in development mode
-group :development, :production do
-  gem 'quiet_assets'
-end
+# group :development, :production do
+  # gem 'quiet_assets'
+# end
 
 # We need this if we want to start the dummy app in production, ie on Teatro.io
 group :production do
