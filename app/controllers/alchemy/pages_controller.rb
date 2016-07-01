@@ -124,7 +124,7 @@ module Alchemy
     # * locale
     #
     def additional_params
-      params.symbolize_keys.delete_if do |key, _|
+      params.reject do |key, _|
         [:action, :controller, :urlname, :locale].include?(key)
       end
     end
