@@ -121,7 +121,7 @@ module Alchemy
       #   could be found
       #
       def new_from_scratch(attributes = {})
-        attributes = attributes.dup.symbolize_keys
+        attributes = attributes.transform_keys(&:to_sym)
         return new if attributes[:name].blank?
 
         new_element_from_definition_by(attributes) || raise(ElementDefinitionError, attributes)
@@ -193,6 +193,7 @@ module Alchemy
       private
 
       def new_element_from_definition_by(attributes)
+        attributes = attributes.to_h
         remove_cell_name_from_element_name!(attributes)
 
         element_definition = Element.definition_by_name(attributes[:name])

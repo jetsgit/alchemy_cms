@@ -31,7 +31,7 @@ module Alchemy
       # @return [Alchemy::Content]
       #
       def create_from_scratch(element, essence_hash)
-        essence_hash.stringify_keys!
+        essence_hash = essence_hash.transform_keys(&:to_s)
         if content = build(element, essence_hash)
           content.create_essence!(essence_hash['essence_type'])
         end
@@ -66,7 +66,7 @@ module Alchemy
       # 2. It builds a definition hash from essence type, if the the name key is not present
       #
       def content_definition(element, essence_hash)
-        essence_hash.stringify_keys!
+        essence_hash = essence_hash.transform_keys(&:to_s)
         # No name given. We build the content from essence type.
         if essence_hash['name'].blank? && essence_hash['essence_type'].present?
           content_definition_from_essence_type(element, essence_hash['essence_type'])

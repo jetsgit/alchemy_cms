@@ -387,7 +387,7 @@ module Alchemy
 
       # Deletes all params from the params-hash except the given ones and merges some new params in
       def merge_params_only(includes, p = {})
-        current_params = params.clone.symbolize_keys
+        current_params = params.transform_keys(&:to_sym)
         if includes.is_a?(Array)
           symbolized_includes = includes.map(&:to_sym)
           current_params.delete_if { |k, _v| !symbolized_includes.include?(k) }
