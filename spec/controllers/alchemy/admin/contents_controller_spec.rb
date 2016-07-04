@@ -78,9 +78,9 @@ module Alchemy
 
         it "should reorder the contents" do
           alchemy_xhr :post, :order, {content_ids: content_ids}
-
+          element.contents.reload
           expect(response.status).to eq(200)
-          expect(element.contents(true).pluck(:id)).to eq(content_ids)
+          expect(element.contents.pluck(:id)).to eq(content_ids)
         end
       end
     end
