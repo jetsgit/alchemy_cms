@@ -172,7 +172,6 @@ module Alchemy
     describe "#download" do
       before do
         expect(Attachment).to receive(:find).with(attachment.id.to_s).and_return(attachment)
-        allow(controller).to receive(:render).and_return(nil)
       end
 
       it "should assign @attachment with Attachment found by id" do
@@ -181,7 +180,7 @@ module Alchemy
       end
 
       it "should send the data to the browser" do
-        expect(controller).to receive(:send_file)
+        expect(controller).to receive(:send_file) { controller.head :ok }
         alchemy_get :download, id: attachment.id
       end
     end
