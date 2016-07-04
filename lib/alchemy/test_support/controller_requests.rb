@@ -32,41 +32,55 @@ module Alchemy
 
       # Executes a request simulating GET HTTP method
       def alchemy_get(action, parameters = nil, session = nil, flash = nil)
-        process_alchemy_action(action, parameters, session, flash, "GET")
+        process_alchemy_action action,
+          params: parameters,
+          session: session,
+          flash: flash,
+          method: 'GET'
       end
 
       # Executes a request simulating POST HTTP method
       def alchemy_post(action, parameters = nil, session = nil, flash = nil)
-        process_alchemy_action(action, parameters, session, flash, "POST")
+        process_alchemy_action action,
+          params: parameters,
+          session: session,
+          flash: flash,
+          method: 'POST'
       end
 
       # Executes a request simulating PUT HTTP method
       def alchemy_put(action, parameters = nil, session = nil, flash = nil)
-        process_alchemy_action(action, parameters, session, flash, "PUT")
+        process_alchemy_action action,
+          params: parameters,
+          session: session,
+          flash: flash,
+          method: 'PUT'
       end
 
       # Executes a request simulating DELETE HTTP method
       def alchemy_delete(action, parameters = nil, session = nil, flash = nil)
-        process_alchemy_action(action, parameters, session, flash, "DELETE")
+        process_alchemy_action action,
+          params: parameters,
+          session: session,
+          flash: flash,
+          method: 'DELETE'
       end
 
       # Executes a simulated XHR request
       def alchemy_xhr(method, action, parameters = nil, session = nil, flash = nil)
-        process_alchemy_xhr_action(method, action, parameters, session, flash)
+        process_alchemy_action action,
+          params: parameters,
+          session: session,
+          flash: flash,
+          method: method,
+          xhr: true
       end
 
       private
 
-      def process_alchemy_action(action, parameters = nil, session = nil, flash = nil, method = "GET")
+      def process_alchemy_action(action, options = {})
         @routes = Alchemy::Engine.routes
-        parameters ||= {}
-        process(action, method, parameters, session, flash)
-      end
-
-      def process_alchemy_xhr_action(method, action, parameters = nil, session = nil, flash = nil)
-        @routes = Alchemy::Engine.routes
-        parameters ||= {}
-        xml_http_request(method, action, parameters, session, flash)
+        process(action, options)
       end
     end
   end
