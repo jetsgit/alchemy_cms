@@ -51,31 +51,31 @@ describe Admin::EventsController do
   end
 
   describe '#update' do
-    let(:params) { {q: 'some_query', page: 6} }
+    let(:params) { {q: {'some' => 'query'}, page: 6} }
     let!(:peter)  { Event.create(name: 'Peter') }
 
     it 'redirects to index, keeping the current location parameters' do
       post :update, params: {id: peter.id, event: {name: "Hans"}}.merge(params)
-      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q=some_query")
+      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bsome%5D=query")
     end
   end
 
   describe '#create' do
-    let(:params) { {q: 'some_query', page: 6} }
+    let(:params) { {q: {'some' => 'query'}, page: 6} }
 
     it 'redirects to index, keeping the current location parameters' do
       post :create, params: {event: {name: "Hans"}}.merge(params)
-      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q=some_query")
+      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bsome%5D=query")
     end
   end
 
   describe '#destroy' do
-    let(:params) { {q: 'some_query', page: 6} }
+    let(:params) { {q: {'some' => 'query'}, page: 6} }
     let!(:peter)  { Event.create(name: 'Peter') }
 
     it 'redirects to index, keeping the current location parameters' do
       delete :destroy, params: {id: peter.id}.merge(params)
-      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q=some_query")
+      expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bsome%5D=query")
     end
   end
 end

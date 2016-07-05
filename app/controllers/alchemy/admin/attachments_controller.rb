@@ -6,7 +6,7 @@ module Alchemy
       helper 'alchemy/admin/tags'
 
       def index
-        @query = Attachment.ransack(params[:q])
+        @query = Attachment.ransack(resource_search_params)
         @attachments = @query.result
 
         if params[:tagged_with].present?
@@ -48,7 +48,7 @@ module Alchemy
           admin_attachments_path(
             per_page: params[:per_page],
             page: params[:page],
-            q: params[:q]
+            q: resource_search_params
           ),
           Alchemy.t("File successfully updated")
         )
@@ -60,7 +60,7 @@ module Alchemy
         @url = admin_attachments_url(
           per_page: params[:per_page],
           page: params[:page],
-          q: params[:q]
+          q: resource_search_params
         )
         flash[:notice] = Alchemy.t('File deleted successfully', name: name)
       end

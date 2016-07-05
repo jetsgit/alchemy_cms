@@ -176,9 +176,13 @@ describe Alchemy::ResourcesHelper do
   end
 
   describe '#current_location_params' do
+    let(:search_params) do
+      {'some' => 'query'}
+    end
+
     let(:params) do
       {
-        q: "some_query",
+        q: search_params,
         page: 6,
         action: "some_action",
         filter: "some_filter",
@@ -187,7 +191,8 @@ describe Alchemy::ResourcesHelper do
     end
 
     before do
-      allow(controller).to receive(:params) { params }
+      expect(controller).to receive(:params) { params }
+      expect(controller).to receive(:resource_search_params) { search_params }
     end
 
     it 'returns the current location params' do

@@ -6,7 +6,7 @@
   <% if @previous %>
     <%= link_to alchemy.admin_picture_path(
         id: @previous,
-        q: params[:q],
+        q: resource_search_params,
         page: params[:page],
         tagged_with: params[:tagged_with],
         size: params[:size],
@@ -20,7 +20,7 @@
   <% if @next %>
     <%= link_to alchemy.admin_picture_path(
         id: @next,
-        q: params[:q],
+        q: resource_search_params,
         page: params[:page],
         tagged_with: params[:tagged_with],
         size: params[:size],

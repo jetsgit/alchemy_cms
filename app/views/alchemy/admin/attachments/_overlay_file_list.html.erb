@@ -1,7 +1,7 @@
 <% if @attachments.empty? %>
   <div class="info">
     <%= render_icon('info') %>
-    <% if params[:q].present? %>
+    <% if resource_search_params.present? %>
       <%= Alchemy.t(:no_search_results) %>
     <% else %>
       <%= Alchemy.t(:no_files_in_archive) %>

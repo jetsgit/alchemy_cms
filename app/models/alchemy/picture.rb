@@ -130,13 +130,13 @@ module Alchemy
 
     # Instance methods
 
-    def previous(params = {})
-      query = Picture.ransack(params[:q])
+    def previous(params = {}, search_params = nil)
+      query = Picture.ransack(search_params)
       Picture.search_by(params, query).where("name < ?", name).last
     end
 
-    def next(params = {})
-      query = Picture.ransack(params[:q])
+    def next(params = {}, search_params = nil)
+      query = Picture.ransack(search_params)
       Picture.search_by(params, query).where("name > ?", name).first
     end
 

@@ -9,7 +9,7 @@
       Alchemy.t(:confirm_to_delete_image_from_server),
       alchemy.admin_picture_path(
         id: picture,
-        q: params[:q],
+        q: resource_search_params,
         page: params[:page],
         tagged_with: params[:tagged_with],
         size: params[:size],
@@ -31,7 +31,7 @@
       image,
       alchemy.admin_picture_path(
         id: picture,
-        q: params[:q],
+        q: resource_search_params,
         page: params[:page],
         tagged_with: params[:tagged_with],
         size: params[:size],

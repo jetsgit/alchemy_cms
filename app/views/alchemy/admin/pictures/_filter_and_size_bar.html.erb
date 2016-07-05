@@ -22,7 +22,7 @@
           size: "small",
           content_id: @content,
           element_id: @element,
-          q: params[:q],
+          q: resource_search_params,
           options: @options.to_json,
           filter: params[:filter],
           tagged_with: params[:tagged_with]
@@ -39,7 +39,7 @@
           size: "medium",
           content_id: @content,
           element_id: @element,
-          q: params[:q],
+          q: resource_search_params,
           options: @options.to_json,
           filter: params[:filter],
           tagged_with: params[:tagged_with]
@@ -56,7 +56,7 @@
           size: "large",
           content_id: @content,
           element_id: @element,
-          q: params[:q],
+          q: resource_search_params,
           options: @options.to_json,
           filter: params[:filter],
           tagged_with: params[:tagged_with]

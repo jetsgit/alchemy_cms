@@ -1,4 +1,4 @@
-<% if @attachments.blank? && params[:q].blank? %>
+<% if @attachments.blank? && resource_search_params.blank? %>
 <div class="info" id="no_files_notice">
   <%= render_icon('info') %>
   <%= Alchemy.t(:no_files_in_archive) %>

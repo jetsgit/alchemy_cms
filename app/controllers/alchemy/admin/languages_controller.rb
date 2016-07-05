@@ -2,7 +2,7 @@ module Alchemy
   module Admin
     class LanguagesController < ResourcesController
       def index
-        @query = Language.on_current_site.ransack(params[:q])
+        @query = Language.on_current_site.ransack(resource_search_params)
         @languages = @query.result.page(params[:page] || 1).per(per_page_value_for_screen_size)
       end
 

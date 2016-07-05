@@ -12,7 +12,7 @@ module Alchemy
 
       def index
         @size = params[:size].present? ? params[:size] : 'medium'
-        @query = Picture.ransack(params[:q])
+        @query = Picture.ransack(resource_search_params)
         @pictures = Picture.search_by(params, @query, pictures_per_page_for_size(@size))
 
         if in_overlay?
@@ -21,8 +21,8 @@ module Alchemy
       end
 
       def show
-        @previous = @picture.previous(params)
-        @next = @picture.next(params)
+        @previous = @picture.previous(params, resource_search_params)
+        @next = @picture.next(params, resource_search_params)
         @pages = @picture.essence_pictures.group_by(&:page)
         render action: 'show'
       end
@@ -144,7 +144,7 @@ module Alchemy
         do_redirect_to admin_pictures_path(
           filter: params[:filter].presence,
           page: params[:page].presence,
-          q: params[:q].presence,
+          q: resource_search_params,
           size: params[:size].presence,
           tagged_with: params[:tagged_with].presence
         )

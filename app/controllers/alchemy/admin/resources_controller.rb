@@ -8,7 +8,7 @@ module Alchemy
       include Alchemy::ResourcesHelper
 
       helper Alchemy::ResourcesHelper, TagsHelper
-      helper_method :resource_handler
+      helper_method :resource_handler, :resource_search_params
 
       before_action :load_resource,
         only: [:show, :edit, :update, :destroy]
@@ -18,7 +18,7 @@ module Alchemy
       end
 
       def index
-        @query = resource_handler.model.ransack(params[:q])
+        @query = resource_handler.model.ransack(resource_search_params)
         items = @query.result
 
         if contains_relations?
@@ -84,6 +84,15 @@ module Alchemy
       end
 
       protected
+
+      # Fix for Ransack Rails 5 issue (https://github.com/activerecord-hackery/ransack/issues/687)
+      def resource_search_params
+        @_resource_search_params ||= if params[:q].present?
+          search_keys = params[:q].keys
+          search_params = params.permit(q: search_keys)
+          search_params[:q].to_h
+        end
+      end
 
       # Returns a translated +flash[:notice]+.
       # The key should look like "Modelname successfully created|updated|destroyed."

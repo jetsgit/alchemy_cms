@@ -4,7 +4,7 @@ module Alchemy
       before_action :load_tag, only: [:edit, :update, :destroy]
 
       def index
-        @query = ActsAsTaggableOn::Tag.ransack(params[:q])
+        @query = ActsAsTaggableOn::Tag.ransack(resource_search_params)
         @tags = @query
                   .result
                   .page(params[:page] || 1)
