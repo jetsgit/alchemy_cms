@@ -9,11 +9,10 @@ shared_examples_for "an essence" do
     element = create(:alchemy_element)
     content = create(:alchemy_content, element: element)
     essence.save
-    content.update(essence: essence, essence_type: essence.class.name)
-    date = content.updated_at
-    content.essence.update(essence.ingredient_column.to_sym => ingredient_value)
-    content.reload
-    expect(content.updated_at).not_to eq(date)
+    content.update(essence: essence, essence_type: essence.class.name, updated_at: 1.week.ago)
+    expect {
+      content.essence.update(essence.ingredient_column.to_sym => ingredient_value)
+    }.to change { content.reload.updated_at }
   end
 
   it "should have correct partial path" do
