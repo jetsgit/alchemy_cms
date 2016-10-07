@@ -134,13 +134,11 @@ module Alchemy
           {}
         when String
           JSON.parse(params[:options])
-        when Hash
-          params[:options]
-        when Array
-          params[:options]
+        when ActionController::Parameters
+          params[:options].permit!.to_h
         else
           {}
-        end.symbolize_keys
+        end.deep_symbolize_keys
       end
 
       # This method decides if we want to raise an exception or not.

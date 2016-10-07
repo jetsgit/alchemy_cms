@@ -4,27 +4,37 @@ describe Alchemy::Admin::BaseController do
   describe '#options_from_params' do
     subject { controller.send(:options_from_params) }
 
+    before do
+      expect(controller).to receive(:params).at_least(:once) do
+        ActionController::Parameters.new(options: options)
+      end
+    end
+
     context "params[:options] is a JSON string" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return(options: '{"hallo":"World"}') }
+      let(:options) { '{"hallo":"World"}' }
 
       it "parses the string into an object" do
+        expect(subject).to eq({hallo: 'World'})
+      end
+    end
+
+    context "params[:options] are Rails parameters" do
+      let(:options) do
+        ActionController::Parameters.new('hallo' => "World")
+      end
+
+      it "returns the options as hash with symbolized keys" do
         expect(subject).to be_an_instance_of(Hash)
         expect(subject).to eq({hallo: 'World'})
       end
     end
 
-    context "params[:options] is already an object" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return(options: {hallo: "World"}) }
-
-      it "parses the string into an object" do
-        expect(subject).to be_an_instance_of(Hash)
-      end
-    end
-
     context "params[:options] is not present" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return({}) }
+      let(:options) do
+        {}
+      end
 
-      it "returns ampty object" do
+      it "returns empty hash" do
         expect(subject).to be_an_instance_of(Hash)
         expect(subject).to eq({})
       end
