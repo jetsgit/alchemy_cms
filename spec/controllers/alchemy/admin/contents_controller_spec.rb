@@ -58,13 +58,11 @@ module Alchemy
     end
 
     describe '#update' do
-      before do
-        expect(Content).to receive(:find).and_return(content)
-      end
+      let(:content) { create(:alchemy_content) }
 
       it "should update a content via ajax" do
-        expect(content.essence).to receive(:update).with('ingredient' => 'Peters Petshop')
         alchemy_xhr :post, :update, {id: content.id, content: {ingredient: 'Peters Petshop'}}
+        expect(content.reload.ingredient).to eq('Peters Petshop')
       end
     end
 
