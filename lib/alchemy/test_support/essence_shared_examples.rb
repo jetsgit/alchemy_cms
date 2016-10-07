@@ -64,8 +64,8 @@ shared_examples_for "an essence" do
 
   describe '#ingredient=' do
     it 'should set the value to ingredient column' do
+      expect(essence).to receive("#{essence.ingredient_column}=".to_sym).once.with(ingredient_value)
       essence.ingredient = ingredient_value
-      expect(essence.ingredient).to eq ingredient_value
     end
   end
 
