@@ -857,11 +857,16 @@ module Alchemy
     end
 
     context 'with parent element' do
-      let!(:parent_element) { create(:alchemy_element, :with_nestable_elements) }
-      let!(:element)        { create(:alchemy_element, name: 'slide', parent_element: parent_element) }
+      let!(:parent_element) do
+        create(:alchemy_element, :with_nestable_elements, updated_at: 1.week.ago)
+      end
+
+      let!(:element) do
+        create(:alchemy_element, name: 'slide', parent_element: parent_element)
+      end
 
       it "touches parent after update" do
-        expect { element.update!(public: false) }.to change(parent_element, :updated_at)
+        expect { element.update!(public: false) }.to change(parent_element.reload, :updated_at)
       end
     end
   end

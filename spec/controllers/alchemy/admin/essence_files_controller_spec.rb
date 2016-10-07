@@ -48,7 +48,7 @@ module Alchemy
     end
 
     describe '#assign' do
-      let(:content) { create(:alchemy_content) }
+      let(:content) { create(:alchemy_content, updated_at: 1.week.ago) }
 
       before do
         expect(Content).to receive(:find_by).and_return(content)
