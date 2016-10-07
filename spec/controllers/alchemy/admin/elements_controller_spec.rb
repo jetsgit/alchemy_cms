@@ -362,7 +362,9 @@ module Alchemy
             'name' => 'header',
             'elements' => ['header']
           })
-          expect(controller).to receive(:params).and_return({element: {name: 'header#header'}})
+          expect(controller).to receive(:params) do
+            ActionController::Parameters.new(element: {name: 'header#header'})
+          end
         end
 
         context "with cell not existing" do
@@ -388,7 +390,9 @@ module Alchemy
 
       context "with only the element name in the params" do
         before do
-          expect(controller).to receive(:params).and_return({element: {name: 'header'}})
+          expect(controller).to receive(:params) do
+            ActionController::Parameters.new(element: {name: 'header'})
+          end
         end
 
         it "should return nil" do
@@ -398,7 +402,9 @@ module Alchemy
 
       context 'with cell definition not found' do
         before do
-          expect(controller).to receive(:params).and_return({element: {name: 'header#header'}})
+          expect(controller).to receive(:params) do
+            ActionController::Parameters.new(element: {name: 'header#header'})
+          end
           expect(Cell).to receive(:definition_for).and_return nil
         end
 

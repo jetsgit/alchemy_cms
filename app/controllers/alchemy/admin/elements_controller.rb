@@ -33,13 +33,13 @@ module Alchemy
 
       # Creates a element as discribed in config/alchemy/elements.yml on page via AJAX.
       def create
-        @page = Page.find(params[:element][:page_id])
+        @page = Page.find(create_element_params[:page_id])
         Element.transaction do
           if @paste_from_clipboard = params[:paste_from_clipboard].present?
             @element = paste_element_from_clipboard
             @cell = @element.cell
           else
-            @element = Element.new_from_scratch(params[:element])
+            @element = Element.new_from_scratch(create_element_params)
             if @page.can_have_cells?
               @cell = find_or_create_cell
               @element.cell = @cell
@@ -124,7 +124,7 @@ module Alchemy
         if @paste_from_clipboard
           element_with_cell_name = params[:paste_from_clipboard]
         else
-          element_with_cell_name = params[:element][:name]
+          element_with_cell_name = create_element_params[:name]
         end
         return nil if element_with_cell_name.blank?
         return nil unless element_with_cell_name.include?('#')
@@ -164,6 +164,10 @@ module Alchemy
 
       def contents_params
         params.fetch(:contents, {}).permit!
+      end
+
+      def create_element_params
+        params[:element].permit(:name, :page_id, :parent_element_id)
       end
 
       def element_params
