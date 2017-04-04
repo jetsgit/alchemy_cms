@@ -194,7 +194,7 @@ module Alchemy
     end
 
     def page_not_found!
-      not_found_error!("Alchemy::Page not found \"#{request.fullpath}\"")
+      not_found_error!("Alchemy::Page not found in Alchemy CMS Jet \"#{request.fullpath}\"")
     end
   end
 end
