@@ -13,7 +13,11 @@ module Alchemy
         @last_edited_pages = Page.all_last_edited_from(current_alchemy_user)
         @all_locked_pages = Page.locked
         if Alchemy.user_class.respond_to?(:logged_in)
-          @online_users = Alchemy.user_class.logged_in.to_a - [current_alchemy_user]
+          @online_users = []
+          Alchemy.user_class.logged_in.each do |user|
+            @online_users << user unless  user.role == "member"  
+          end
+          @online_users = @online_users - [current_alchemy_user]
         end
         if current_alchemy_user.respond_to?(:sign_in_count) && current_alchemy_user.respond_to?(:last_sign_in_at)
           @last_sign_at = current_alchemy_user.last_sign_in_at
