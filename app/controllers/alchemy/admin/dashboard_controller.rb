@@ -7,6 +7,9 @@ module Alchemy
       authorize_resource class: :alchemy_admin_dashboard
 
       def index
+        if current_alchemy_user.role == "member"
+          redirect_to root_path
+        end
         @last_edited_pages = Page.all_last_edited_from(current_alchemy_user)
         @all_locked_pages = Page.locked
         if Alchemy.user_class.respond_to?(:logged_in)
