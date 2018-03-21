@@ -100,6 +100,7 @@ module Alchemy
     scope :folded,            -> { where(folded: true) }
     scope :expanded,          -> { where(folded: false) }
     scope :not_nested,        -> { where(parent_element_id: nil) }
+
     delegate :restricted?, to: :page, allow_nil: true
 
     # Concerns
