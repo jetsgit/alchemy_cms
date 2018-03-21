@@ -13,6 +13,8 @@ module Alchemy
       :ingredients,
       :content_ids
 
+    has_many :nested_elements
+
     def ingredients
       ingredient = []
       if object.definition['nestable_elements']
