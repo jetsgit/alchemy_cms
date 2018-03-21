@@ -7,7 +7,15 @@ module Alchemy
     # If you want to only load a specific type of element pass ?named=an_element_name
     #
     def index
-      @elements = Element.accessible_by(current_ability, :index)
+      @elements = Element.not_nested
+      # below commented out for fix
+      # @elements = Element.accessible_by(current_ability, :index)
+
+      # new if...end block for fix
+      if cannot? :manage Alchemy::Element
+        @elements = Element.accessible_by(current_ability, :index)
+      end
+
       if params[:page_id].present?
         @elements = @elements.where(page_id: params[:page_id])
       end
