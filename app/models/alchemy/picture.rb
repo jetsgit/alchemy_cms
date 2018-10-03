@@ -32,6 +32,8 @@ module Alchemy
     has_many :elements, through: :contents
     has_many :pages, through: :elements
 
+    belongs_to :recipe, class_name: '::Recipe', foreign_key: 'recipe_id'
+
     # Raise error, if picture is in use (aka. assigned to an EssencePicture)
     #
     # === CAUTION
