@@ -1,0 +1,31 @@
+Unfortunately your question does not make sense. 
+
+"*page was created using AlchemyCMS and I want  @car to be included as Car.new*"
+
+
+By following  the Alchemy-CMS [**guide for creating a form**](https://guides.alchemy-cms.com/3.3/best_practice_create_form.html) you see that
+it is necessary to:
+
+ - Create a model under the Alchemy namespace, i.e. Alchemy::Car
+ - Create a new car element in `elements.yml` for your model attributes
+ - Create a new page layout for a car form in `page_layouts.yml`
+ - Generate views with `rails g alchemy:elements --skip`
+
+In your case, the example for form would be modified to:
+
+`<%= simple_form_for(@car ||= Alchemy::Car.new) do |form| %>`
+
+
+This is only place you would be using Car.new. In the rails form.
+
+
+So hopefully from this you will understand that:
+
+"*I don't want to render the page using a Rails controller but how do I include Rails variables on Alchemy's side of things?*"
+
+...also doesn't make sense. Because Alchemy is using Rails to render. Content on a page is controlled by Alchemy, so you are not going to be able to inject random data.
+
+If you did not wish to use Rails (or Alchemy which by default is using Rails) to render some data it would be necessary to use javascript to render (sic). Alchemy-CMS actually has an [**AlchemyCMS/Alchemy-Angular gem**](https://github.com/AlchemyCMS/alchemy-angular) that is not maintained but would be a starting point. You would generate views within that, and create an AngularJS service using`$http` to fetch whatever data you want, getting JSON format data from a Rails Api.
+
+You can use `acts_as_essence` to wrap existing models and use with Alchemy-CMS, please check out their great documentation to see how to do that.
+
