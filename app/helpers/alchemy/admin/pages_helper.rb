@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     module PagesHelper
-      include Alchemy::BaseHelper
+      include Alchemy::Admin::BaseHelper
 
       # Returns options tags for the screen sizes select in page edit view.
       #
@@ -17,17 +19,6 @@ module Alchemy
         ])
       end
 
-      # Returns the translated explanation of the page status.
-      #
-      def combined_page_status(page)
-        page.status.map do |state, _value|
-          next if state == :locked
-          css_class = page.send("#{state}?") ? "page_status #{state}" : "page_status not_#{state}"
-          val = content_tag(:span, '', class: css_class)
-          val + page.status_title(state)
-        end.delete_if(&:blank?).join("<br>").html_safe
-      end
-
       # Renders a label for page's page layout
       #
       # If the page layout definition of the page is missing, it displays a warning.
@@ -35,15 +26,31 @@ module Alchemy
       def page_layout_label(page)
         if page.persisted? && page.definition.blank?
           [
-            content_tag(:span, '',
-              class: 'inline warning icon',
-              title: Alchemy.t(:page_definition_missing)
-            ),
+            page_layout_missing_warning,
             Alchemy.t(:page_type)
           ].join('&nbsp;').html_safe
         else
           Alchemy.t(:page_type)
         end
+      end
+
+      def page_status_checkbox(page, attribute)
+        label = page.class.human_attribute_name(attribute)
+
+        if page.attribute_fixed?(attribute)
+          checkbox = check_box(:page, attribute, disabled: true)
+          hint = content_tag(:span, class: 'hint-bubble') do
+            Alchemy.t(:attribute_fixed, attribute: attribute)
+          end
+          content = content_tag(:span, class: 'with-hint') do
+            "#{checkbox}\n#{label}\n#{hint}".html_safe
+          end
+        else
+          checkbox = check_box(:page, attribute)
+          content = "#{checkbox}\n#{label}".html_safe
+        end
+
+        content_tag(:label, class: 'checkbox') { content }
       end
     end
   end

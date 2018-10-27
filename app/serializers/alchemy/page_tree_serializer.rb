@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class PageTreeSerializer < BaseSerializer
     def attributes
@@ -8,23 +10,24 @@ module Alchemy
       tree = []
       path = [{id: object.parent_id, children: tree}]
       page_list = object.self_and_descendants
-      skip_branch = false
       base_level = object.level - 1
+      # Load folded pages in advance
+      folded_user_pages = FoldedPage.folded_for_user(opts[:user]).pluck(:page_id)
+      folded_depth = Float::INFINITY
 
       page_list.each_with_index do |page, i|
         has_children = page_list[i + 1] && page_list[i + 1].parent_id == page.id
-        folded = has_children && page.folded?(opts[:user])
+        folded = has_children && folded_user_pages.include?(page.id)
 
-        if skip_branch
-          next if page.parent_id == path.last[:children].last[:id]
-
-          skip_branch = false
+        if page.depth > folded_depth
+          next
+        else
+          folded_depth = Float::INFINITY
         end
 
-        # Do not walk my children if I'm folded and you don't need to have the
-        # full tree.
+        # If this page is folded, skip all pages that are on a higher level (further down the tree).
         if folded && !opts[:full]
-          skip_branch = true
+          folded_depth = page.depth
         end
 
         if page.parent_id != path.last[:id]
@@ -46,27 +49,47 @@ module Alchemy
     protected
 
     def page_hash(page, has_children, level, folded)
-      {
+      p_hash = {
         id: page.id,
         name: page.name,
-        permissions: page_permissions(page, opts[:ability]),
         public: page.public?,
         visible: page.visible?,
         restricted: page.restricted?,
-        status_titles: page_status_titles(page),
         page_layout: page.page_layout,
         slug: page.slug,
         redirects_to_external: page.redirects_to_external?,
-        locked: page.locked?,
-        definition_missing: page.definition.blank?,
         urlname: page.urlname,
-        external_urlname: page.external_urlname,
+        external_urlname: page.redirects_to_external? ? page.external_urlname : nil,
         level: level,
         root: level == 1,
-        folded: folded,
         root_or_leaf: level == 1 || !has_children,
         children: []
       }
+
+      if opts[:elements]
+        p_hash.update(elements: ActiveModel::Serializer::CollectionSerializer.new(page_elements(page)))
+      end
+
+      if opts[:ability].can?(:index, :alchemy_admin_pages)
+        p_hash.merge({
+          definition_missing: page.definition.blank?,
+          folded: folded,
+          locked: page.locked?,
+          locked_notice: page.locked? ? Alchemy.t('This page is locked', name: page.locker_name) : nil,
+          permissions: page_permissions(page, opts[:ability]),
+          status_titles: page_status_titles(page)
+        })
+      else
+        p_hash
+      end
+    end
+
+    def page_elements(page)
+      if opts[:elements] == 'true'
+        page.elements
+      else
+        page.elements.named(opts[:elements].split(',') || [])
+      end
     end
 
     def page_permissions(page, ability)
@@ -75,7 +98,8 @@ module Alchemy
         configure: ability.can?(:configure, page),
         copy: ability.can?(:copy, page),
         destroy: ability.can?(:destroy, page),
-        create: ability.can?(:create, Alchemy::Page)
+        create: ability.can?(:create, Alchemy::Page),
+        edit_content: ability.can?(:edit_content, page)
       }
     end
 

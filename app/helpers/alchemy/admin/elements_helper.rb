@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     module ElementsHelper
@@ -11,32 +13,6 @@ module Alchemy
       def render_editor(element)
         render_element(element, :editor)
       end
-
-      # Renders a drag'n'drop picture gallery editor for all EssencePictures.
-      #
-      # It brings full functionality for adding images, deleting images and sorting them via drag'n'drop.
-      # Just place this helper inside your element editor view, pass the element as parameter and that's it.
-      #
-      # === Options:
-      #
-      #   :maximum_amount_of_images    [Integer]   # This option let you handle the amount of images your customer can add to this element.
-      #
-      def render_picture_gallery_editor(element, options = {})
-        default_options = {
-          maximum_amount_of_images: nil,
-          grouped: true
-        }
-        options = default_options.merge(options)
-        render(
-          partial: "alchemy/admin/elements/picture_gallery_editor",
-          locals: {
-            pictures: element.contents.gallery_pictures,
-            element: element,
-            options: options
-          }
-        )
-      end
-      alias_method :render_picture_editor, :render_picture_gallery_editor
 
       # Returns an elements array for select helper.
       #
@@ -80,16 +56,17 @@ module Alchemy
         options.delete_if { |_c, e| e.blank? }
       end
 
-      def element_array_for_options(e, object_method, cell = nil)
-        if e.class.name == 'Alchemy::Element'
+      def element_array_for_options(element, object_method, cell = nil)
+        case element
+        when Alchemy::Element
           [
-            e.display_name_with_preview_text,
-            e.send(object_method).to_s + (cell ? "##{cell['name']}" : "")
+            element.display_name_with_preview_text,
+            element.send(object_method).to_s + (cell ? "##{cell['name']}" : "")
           ]
         else
           [
-            Element.display_name_for(e['name']),
-            e[object_method] + (cell ? "##{cell['name']}" : "")
+            Element.display_name_for(element['name']),
+            element[object_method] + (cell ? "##{cell['name']}" : "")
           ]
         end
       end
@@ -102,6 +79,7 @@ module Alchemy
           element.nestable_elements.any? ? 'nestable' : 'not-nestable',
           element.taggable? ? 'taggable' : 'not-taggable',
           element.folded ? 'folded' : 'expanded',
+          element.compact? ? 'compact' : nil,
           local_assigns[:draggable] == false ? 'not-draggable' : 'draggable'
         ].join(' ')
       end

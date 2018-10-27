@@ -1,5 +1,4 @@
 #top_menu {
-  box-sizing: border-box;
   position: fixed;
   top: 0;
   margin-left: $main-menu-width;
@@ -15,14 +14,12 @@
 }
 
 #left_menu {
-  box-sizing: border-box;
   z-index: 30;
   height: 100%;
   position: fixed;
   top: 0;
   left: 0;
   width: $main-menu-width;
-  border-right: $default-border;
   background-color: $main-menu-bg-color;
   @extend .disable-user-select;
 
@@ -49,7 +46,6 @@
       }
 
       label {
-        box-sizing: border-box;
         position: absolute;
         top: 0;
         left: $collapsed-main-menu-width - 1;
@@ -66,26 +62,28 @@
     @include truncate($main-menu-entry-max-width);
   }
 
-  a {
-    text-shadow: $text-shadow-light;
+  img, .icon {
+    width: 24px;
   }
 
-  img, .module.icon {
+  img {
     border-style: none;
     height: 24px;
-    width: 24px;
-    display: inline-block;
-    vertical-align: middle;
+    vertical-align: -0.6em;
+  }
+
+  .icon {
+    vertical-align: -0.15em;
+    color: inherit;
   }
 }
 
 #main_navi {
-  padding-top: 30px;
+  padding-top: 28px;
   padding-bottom: 80px;
 }
 
 .main_navi_entry {
-  color: $main-menu-text-color;
   position: relative;
   display: block;
   line-height: 46px;
@@ -107,21 +105,37 @@
     }
   }
 
-  &.active {
+  &.active, &:hover {
     background-color: $main-menu-active-bg-color;
-    color: $text-color;
     cursor: default;
+
+    a, .icon {
+      color: $main-menu-active-text-color;
+      text-decoration: none;
+      text-shadow: none;
+
+      &:focus {
+        @include default-focus-style(
+          $box-shadow: inset 0 0 0 2px $main-menu-active-text-color,
+          $border-radius: 0
+        );
+      }
+    }
   }
 
   a {
     display: block;
     padding-left: 3 * $default-padding;
+    font-weight: bold;
+    color: $main-menu-text-color;
     transition: color $transition-duration $transition-easing;
+    @include antialiased-font-smoothing;
 
-    &:hover {
-      text-decoration: none;
-      color: #000;
-      text-shadow: none;
+    &:focus {
+      @include default-focus-style(
+        $box-shadow: inset 0 0 0 2px $focus-color,
+        $border-radius: 0
+      );
     }
   }
 }
@@ -177,15 +191,10 @@ body:not(.collapsed-menu) {
     background-color: transparent;
     transition: background-color $transition-duration $transition-easing;
     @include truncate($main-menu-width, $display: block);
-
-    &:hover {
-      background-color: rgba(255,255,255,0.2);
-    }
   }
 
-  &.active a {
-    font-weight: bold;
-    color: $main-menu-text-color;
+  &.active a, a:hover {
+    background-color: darken($dark-orange, 5%);
   }
 }
 
@@ -213,6 +222,10 @@ body:not(.collapsed-menu) {
   > a {
     cursor: pointer;
     padding: 0px 8px;
+
+    &:focus {
+      @include default-focus-style($box-shadow: inset 0 0 0 2px $focus-color);
+    }
   }
 
   .icon.close {
@@ -229,7 +242,7 @@ body:not(.collapsed-menu) {
     display: inline-block;
     color: $muted-text-color;
     margin-right: 2px;
-    font-size: 10px;
+    font-size: $small-font-size;
     text-transform: uppercase;
   }
 
@@ -237,6 +250,6 @@ body:not(.collapsed-menu) {
     display: inline-block;
     color: $muted-text-color;
     margin-right: $default-margin;
-    font-size: 10px;
+    font-size: $small-font-size;
   }
 }

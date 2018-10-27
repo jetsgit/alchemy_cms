@@ -1,41 +1,55 @@
 [![Gem Version](https://badge.fury.io/rb/alchemy_cms.svg)](http://badge.fury.io/rb/alchemy_cms)
 [![Build Status](https://travis-ci.org/AlchemyCMS/alchemy_cms.svg?branch=master)](https://travis-ci.org/AlchemyCMS/alchemy_cms)
-[![Code Climate](https://codeclimate.com/github/AlchemyCMS/alchemy_cms.svg)](https://codeclimate.com/github/AlchemyCMS/alchemy_cms)
-[![Test Coverage](https://codeclimate.com/github/AlchemyCMS/alchemy_cms/badges/coverage.svg)](https://codeclimate.com/github/AlchemyCMS/alchemy_cms)
-[![Slack Status](http://slack.alchemy-cms.com/badge.svg)](http://slack.alchemy-cms.com)
+[![Maintainability](https://api.codeclimate.com/v1/badges/196c56c56568ed24a697/maintainability)](https://codeclimate.com/github/AlchemyCMS/alchemy_cms/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/196c56c56568ed24a697/test_coverage)](https://codeclimate.com/github/AlchemyCMS/alchemy_cms/test_coverage)
+[![Slack Status](http://slackin.alchemy-cms.com/badge.svg)](http://slackin.alchemy-cms.com)
+[![Backers](https://opencollective.com/alchemy_cms/tiers/backer/badge.svg?label=backer&color=blue)](https://opencollective.com/alchemy_cms)
 
-**CAUTION: This master branch is a development branch that *can* contain bugs. For productive environments you should use the [current Ruby gem version](https://rubygems.org/gems/alchemy_cms), or the [latest stable branch (3.4-stable)](https://github.com/AlchemyCMS/alchemy_cms/tree/3.4-stable).**
+**CAUTION: This master branch is a development branch that *can* contain bugs. For productive environments you should use the [current Ruby gem version](https://rubygems.org/gems/alchemy_cms), or the [latest stable branch (4.1-stable)](https://github.com/AlchemyCMS/alchemy_cms/tree/4.1-stable).**
 
 
 ## About
 
-![Alchemy CMS](http://alchemy-cms.com/assets/alchemy_logo.svg)
+![Alchemy CMS](app/assets/images/alchemy/alchemy-logo.png)
 
-Alchemy is a powerful, flexible and user centric Rails CMS.
+Alchemy is a headless Rails CMS.
 
-Read more about Alchemy on the [website](https://alchemy-cms.com) and in the [guidelines](http://guides.alchemy-cms.com/stable/).
+Read more about Alchemy on the [website](https://alchemy-cms.com) and in the [guidelines](https://guides.alchemy-cms.com/stable/).
 
 
 ## Features
 
-- Highly flexible templating that completely separates content from markup
-- End-User centric graphical user interface
+- Flexible templating that separates content from markup
+- A rich RESTful API
+- Intuitive admin interface with live preview
 - Multi language and multi domain
 - SEO friendly urls
 - User Access Control
 - Build in contact form mailer
 - Attachments and downloads
-- On-the-fly image rendering
+- On-the-fly image cropping and resizing
 - Extendable via Rails engines
 - Integrates into existing Rails Apps
+- Resourceful Rails admin
 - Flexible caching
 - Hostable on any Server that supports Ruby on Rails, a SQL Database and ImageMagick
 
+## Demo
+
+Deploy your own free demo on Heroku
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/AlchemyCMS/alchemy-demo)
+
+or visit the existing demo at https://alchemy-demo.herokuapp.com
+
+- Login: `demo`
+- Password: `demo123`
 
 ## Rails Version
 
-**This version of Alchemy CMS runs with Rails 4.2**
+**This version of Alchemy CMS runs with Rails 5 only**
 
+* For a Rails 4.2 compatible version use the [`3.6-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.6-stable).
 * For a Rails 4.0/4.1 compatible version use the [`3.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.1-stable).
 * For a Rails 3.2 compatible version use the [`2.8-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/2.8-stable).
 * For a Rails 3.1 compatible version use the [`2.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/2.1-stable).
@@ -45,7 +59,11 @@ Read more about Alchemy on the [website](https://alchemy-cms.com) and in the [gu
 
 ## Ruby Version
 
-Alchemy runs with Ruby >= 2.0.0.
+Alchemy runs with Ruby >= 2.2.2.
+
+For a Ruby 2.1 compatible version use the [`3.6-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.6-stable).
+
+For a Ruby 2.0.0 compatible version use the [`3.2-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.2-stable).
 
 For a Ruby 1.9.3 compatible version use the [`3.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.1-stable).
 
@@ -53,25 +71,6 @@ For a Ruby 1.8.7 compatible version use the [`2.3-stable` branch](https://github
 
 
 ## Installation
-
-### Install as a standalone project
-
-Use the installer:
-
-```shell
-$ gem install alchemy_cms --pre
-$ alchemy new my_magicpage
-```
-
-and follow the instructions to finish the installation.
-
-The installer has some options (like choosing the database). See them with:
-
-```shell
-$ alchemy --help
-```
-
-### Install into an existing Rails project
 
 #### 1. Add the Alchemy gem:
 
@@ -81,15 +80,7 @@ Put this into your `Gemfile`:
 gem 'alchemy_cms', github: 'AlchemyCMS/alchemy_cms', branch: 'master'
 ```
 
-**NOTE:** You normally want to use a stable branch, like `3.4-stable`.
-
-If you want to use Russian translation and have better i18n support, you should put:
-
-```ruby
-gem 'russian', '~> 0.6.0'
-```
-
-or gem with similar functionality into your Gemfile.
+**NOTE:** You normally want to use a stable branch, like `4.1-stable`.
 
 #### 2. Update your bundle:
 
@@ -110,7 +101,7 @@ If you don't have your own user class, you can use the Alchemy user model. Just 
 gem 'alchemy-devise', github: 'AlchemyCMS/alchemy-devise', branch: 'master'
 ```
 
-**NOTE:** You normally want to use a stable branch, like `3.4-stable`.
+**NOTE:** You normally want to use a stable branch, like `4.1-stable`.
 
 Then run:
 
@@ -184,7 +175,7 @@ For example, these settings:
 ```ruby
 # config/initializers/alchemy.rb
 
-Alchemy.admin_path = '/backend'
+Alchemy.admin_path = 'backend'
 Alchemy.admin_constraints = {subdomain: 'hidden'}
 ```
 
@@ -202,18 +193,23 @@ something like S3.
 
 Please follow the guidelines about picture caching on the Dragonfly homepage for further instructions:
 
-http://markevans.github.io/dragonfly/cache/
+http://markevans.github.io/dragonfly/cache
 
+### Localization
+
+Alchemy ships with one default English translation for the admin interface. If you want to use the admin interface in other languages please have a look at the [`alchemy_i18n` project](https://github.com/AlchemyCMS/alchemy_i18n).
 
 ## Upgrading
 
-The Alchemy team takes upgrades very seriously and tries to make them as smooth as we can.
-Therefore we have build in upgrade tasks, that try to automate as much as possible.
+We, the Alchemy team, take upgrades very seriously and we try to make them as smooth as possible.
+Therefore we have build an upgrade task, that tries to automate the upgrade procedure as much as possible.
 
-That's why after updating the Alchemy gem you should **always run the upgrader**:
-
+That's why after the Alchemy gem has been updated, with explicit call to:
 ```shell
 $ bundle update alchemy_cms
+```
+you should **always run the upgrader**:
+```shell
 $ bin/rake alchemy:upgrade
 ```
 
@@ -226,7 +222,7 @@ Also, `git diff` is your friend.
 
 ### Customize the upgrade preparation
 
-The Alchemy upgrader comes prepared with with several rake tasks in a specific order.
+The Alchemy upgrader comes prepared with several rake tasks in a specific order.
 This is sometimes not what you want or could even break upgrades.
 In order to customize the upgrade preparation process you can instead run each of the tasks on their own.
 
@@ -325,7 +321,7 @@ Alchemy specs are written **in RSpec 3**. Please **do not use deprecated RSpec 2
 * Read the guidelines: http://guides.alchemy-cms.com.
 * Read the documentation: http://rubydoc.info/github/AlchemyCMS/alchemy_cms
 * If you found a bug please use the [issue tracker on Github](https://github.com/AlchemyCMS/alchemy_cms/issues).
-* For questions about general usage please use [Stack Overflow](http://stackoverflow.com/questions/tagged/alchemy-cms), [the User Group](http://groups.google.com/group/alchemy-cms) or the [IRC channel](irc://irc.freenode.net#alchemy_cms).
+* For questions about general usage please use [Stack Overflow](http://stackoverflow.com/questions/tagged/alchemy-cms), [the User Group](http://groups.google.com/group/alchemy-cms) or the [Slack](https://slackin.alchemy-cms.com).
 * New features should be discussed on our [Trello Board](https://trello.com/alchemycms).
 
 **PLEASE** don't use the Github issues for feature requests. If you want to contribute to Alchemy please [read the contribution guidelines](https://github.com/AlchemyCMS/alchemy_cms/blob/master/CONTRIBUTING.md) before doing so.
@@ -339,7 +335,7 @@ Alchemy specs are written **in RSpec 3**. Please **do not use deprecated RSpec 2
 * Issue-Tracker: <https://github.com/AlchemyCMS/alchemy_cms/issues>
 * Sourcecode: <https://github.com/AlchemyCMS/alchemy_cms>
 * User Group: <http://groups.google.com/group/alchemy-cms>
-* IRC Channel: <irc://irc.freenode.net#alchemy_cms>
+* Slack: <https://slackin.alchemy-cms.com>
 * Discussion Board: <https://trello.com/alchemycms>
 * Twitter: <https://twitter.com/alchemy_cms>
 

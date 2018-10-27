@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -47,6 +49,8 @@ module Alchemy
       end
 
       context "for multiple sites" do
+        let!(:default_site) { create(:alchemy_site, :default) }
+
         let!(:site_2) do
           create(:alchemy_site, host: 'another-host.com')
         end

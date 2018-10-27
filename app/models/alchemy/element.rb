@@ -1,26 +1,29 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_elements
 #
-#  id              :integer          not null, primary key
-#  name            :string(255)
-#  position        :integer
-#  page_id         :integer
-#  public          :boolean          default(TRUE)
-#  folded          :boolean          default(FALSE)
-#  unique          :boolean          default(FALSE)
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :integer
-#  updater_id      :integer
-#  cell_id         :integer
-#  cached_tag_list :text
+#  id                :integer          not null, primary key
+#  name              :string
+#  position          :integer
+#  page_id           :integer          not null
+#  public            :boolean          default(TRUE)
+#  folded            :boolean          default(FALSE)
+#  unique            :boolean          default(FALSE)
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  creator_id        :integer
+#  updater_id        :integer
+#  cell_id           :integer
+#  cached_tag_list   :text
+#  parent_element_id :integer
 #
 
 module Alchemy
-  class Element < ActiveRecord::Base
+  class Element < BaseRecord
     include Alchemy::Logger
-    include Alchemy::Touching
+    include Alchemy::Taggable
     include Alchemy::Hints
 
     FORBIDDEN_DEFINITION_ATTRIBUTES = [
@@ -29,7 +32,8 @@ module Alchemy
       "contents",
       "hint",
       "picture_gallery",
-      "taggable"
+      "taggable",
+      "compact"
     ].freeze
 
     SKIPPED_ATTRIBUTES_ON_COPY = [
@@ -42,8 +46,6 @@ module Alchemy
       "updated_at",
       "updater_id"
     ].freeze
-
-    acts_as_taggable
 
     # All Elements that share the same page id, cell id and parent element id are considered a list.
     #
@@ -68,16 +70,16 @@ module Alchemy
       foreign_key: :parent_element_id,
       dependent: :destroy
 
-    belongs_to :cell, required: false
-    belongs_to :page, required: true
+    belongs_to :cell, optional: true, touch: true
+    belongs_to :page, touch: true, inverse_of: :descendent_elements
 
     # A nested element belongs to a parent element.
     belongs_to :parent_element,
       class_name: 'Alchemy::Element',
-      required: false,
+      optional: true,
       touch: true
 
-    has_and_belongs_to_many :touchable_pages, -> { uniq },
+    has_and_belongs_to_many :touchable_pages, -> { distinct },
       class_name: 'Alchemy::Page',
       join_table: ElementToPage.table_name
 
@@ -87,8 +89,7 @@ module Alchemy
     attr_accessor :create_contents_after_create
 
     after_create :create_contents, unless: proc { |e| e.create_contents_after_create == false }
-    after_update :touch_pages
-    after_update :touch_cell, unless: -> { cell.nil? }
+    after_update :touch_touchable_pages
 
     scope :trashed,           -> { where(position: nil).order('updated_at DESC') }
     scope :not_trashed,       -> { where(Element.arel_table[:position].not_eq(nil)) }
@@ -102,6 +103,7 @@ module Alchemy
     scope :from_current_site, -> { where(Language.table_name => {site_id: Site.current || Site.default}).joins(page: 'language') }
     scope :folded,            -> { where(folded: true) }
     scope :expanded,          -> { where(folded: false) }
+    scope :not_nested,        -> { where(parent_element_id: nil) }
 
     delegate :restricted?, to: :page, allow_nil: true
 
@@ -121,9 +123,7 @@ module Alchemy
       #   could be found
       #
       def new_from_scratch(attributes = {})
-        attributes = attributes.dup.symbolize_keys
         return new if attributes[:name].blank?
-
         new_element_from_definition_by(attributes) || raise(ElementDefinitionError, attributes)
       end
 
@@ -152,10 +152,7 @@ module Alchemy
       #   @copy.public? # => false
       #
       def copy(source_element, differences = {})
-        source_element.attributes.stringify_keys!
-        differences.stringify_keys!
-
-        attributes = source_element.attributes
+        attributes = source_element.attributes.with_indifferent_access
                        .except(*SKIPPED_ATTRIBUTES_ON_COPY)
                        .merge(differences)
                        .merge({
@@ -193,16 +190,11 @@ module Alchemy
       private
 
       def new_element_from_definition_by(attributes)
-        remove_cell_name_from_element_name!(attributes)
-
-        element_definition = Element.definition_by_name(attributes[:name])
+        element_attributes = attributes.to_h.merge(name: attributes[:name].split('#').first)
+        element_definition = Element.definition_by_name(element_attributes[:name])
         return if element_definition.nil?
 
-        new(element_definition.merge(attributes).except(*FORBIDDEN_DEFINITION_ATTRIBUTES))
-      end
-
-      def remove_cell_name_from_element_name!(attributes)
-        attributes[:name] = attributes[:name].split('#').first
+        new(element_definition.merge(element_attributes).except(*FORBIDDEN_DEFINITION_ATTRIBUTES))
       end
     end
 
@@ -211,7 +203,8 @@ module Alchemy
     # Pass an element name to get next of this kind.
     #
     def next(name = nil)
-      previous_or_next('>', name)
+      elements = page.elements.published.where('position > ?', position)
+      select_element(elements, name, :asc)
     end
 
     # Returns previous public element from same page.
@@ -219,7 +212,8 @@ module Alchemy
     # Pass an element name to get previous of this kind.
     #
     def prev(name = nil)
-      previous_or_next('<', name)
+      elements = page.elements.published.where('position < ?', position)
+      select_element(elements, name, :desc)
     end
 
     # Stores the page into +touchable_pages+ (Pages that have to be touched after updating the element).
@@ -261,6 +255,11 @@ module Alchemy
     # The opposite of folded?
     def expanded?
       !folded?
+    end
+
+    # Defined as compact element?
+    def compact?
+      definition['compact'] == true
     end
 
     # The element's view partial is dependent from its name
@@ -313,17 +312,9 @@ module Alchemy
 
     private
 
-    # Returns previous or next public element from same page.
-    #
-    # @param [String]
-    #   Pass '>' or '<' to find next or previous public element.
-    # @param [String]
-    #   Pass an element name to get previous of this kind.
-    #
-    def previous_or_next(dir, name = nil)
-      elements = page.elements.published.where("#{self.class.table_name}.position #{dir} #{position}")
+    def select_element(elements, name, order)
       elements = elements.named(name) if name.present?
-      elements.reorder("position #{dir == '>' ? 'ASC' : 'DESC'}").limit(1).first
+      elements.reorder(position: order).limit(1).first
     end
 
     # Returns all cells from given page this element could be placed in.
@@ -340,13 +331,13 @@ module Alchemy
       available_page_cells(page).collect(&:name).uniq
     end
 
-    # If element has a +cell+ associated,
-    # it updates it's timestamp.
+    # Updates all +touchable_pages+
     #
     # Called after_update
     #
-    def touch_cell
-      cell.touch
+    def touch_touchable_pages
+      return unless respond_to?(:touchable_pages)
+      touchable_pages.each(&:touch)
     end
   end
 end

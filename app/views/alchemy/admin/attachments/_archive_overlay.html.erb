@@ -1,20 +1,20 @@
 <div id="overlay_toolbar">
   <% if can? :create, Alchemy::Attachment %>
     <%= render 'alchemy/admin/uploader/button',
-      model_class: Alchemy::Attachment,
+      object: Alchemy::Attachment.new,
       dropzone: '#assign_file_list',
       file_attribute: 'file',
       in_dialog: true,
       redirect_url: admin_attachments_path(
         element_id: @element.try(:id),
         content_id: @content.try(:id),
-        options: @options ? @options.to_json : nil
+        options: options_from_params
       ) %>
   <% end %>
   <%= render 'alchemy/admin/partials/remote_search_form' %>
 </div>
 
-<div id="assign_file_list" class="with_padding<%= params[:tagged_with].present? ? ' filtered' : '' %>">
+<div id="assign_file_list" class="with_padding<%= search_filter_params[:tagged_with].present? ? ' filtered' : '' %>">
   <div id="library_sidebar">
     <%= render 'filter_bar' %>
 

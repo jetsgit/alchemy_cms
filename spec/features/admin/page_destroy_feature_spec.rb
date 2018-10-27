@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -10,9 +12,7 @@ module Alchemy
       it "deletes page and redirects to page tree" do
         visit admin_pages_path
 
-        within("#page_#{content_page.id}") do
-          click_link Alchemy.t(:delete_page)
-        end
+        page.find("a[href='#{admin_page_path(content_page.id)}']").click
 
         within '.alchemy-dialog-buttons' do
           click_button 'Yes'
@@ -26,12 +26,10 @@ module Alchemy
     context 'destroying a layout page' do
       let!(:layout_page) { create(:alchemy_page, :layoutpage) }
 
-      it "deletes page and redirects to page tree" do
+      it "deletes page and redirects to layoutpages list" do
         visit admin_layoutpages_path
 
-        within("#page_#{layout_page.id}") do
-          click_link Alchemy.t(:delete_page)
-        end
+        page.find("a[href='#{admin_page_path(layout_page.id)}']").click
 
         within '.alchemy-dialog-buttons' do
           click_button 'Yes'

@@ -1,27 +1,29 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class AttachmentsController < ResourcesController
       include UploaderResponses
+      include ArchiveOverlay
 
       helper 'alchemy/admin/tags'
 
       def index
-        @query = Attachment.ransack(params[:q])
+        @query = Attachment.ransack(search_filter_params[:q])
         @attachments = @query.result
 
-        if params[:tagged_with].present?
-          @attachments = @attachments.tagged_with(params[:tagged_with])
+        if search_filter_params[:tagged_with].present?
+          @attachments = @attachments.tagged_with(search_filter_params[:tagged_with])
         end
 
-        if params[:file_type].present?
-          @attachments = @attachments.with_file_type(params[:file_type])
+        if search_filter_params[:file_type].present?
+          @attachments = @attachments.with_file_type(search_filter_params[:file_type])
         end
 
         @attachments = @attachments
           .page(params[:page] || 1)
-          .per(15)
+          .per(items_per_page)
 
-        @options = options_from_params
         if in_overlay?
           archive_overlay
         end
@@ -33,35 +35,27 @@ module Alchemy
       end
 
       def create
-        @attachment = Attachment.new(attachment_attributes)
-        if @attachment.save
-          render succesful_uploader_response(file: @attachment)
-        else
-          render failed_uploader_response(file: @attachment)
-        end
+        @attachment = Attachment.create(attachment_attributes)
+        handle_uploader_response(status: :created)
       end
 
       def update
-        @attachment.update_attributes(attachment_attributes)
-        render_errors_or_redirect(
-          @attachment,
-          admin_attachments_path(
-            per_page: params[:per_page],
-            page: params[:page],
-            q: params[:q]
-          ),
-          Alchemy.t("File successfully updated")
-        )
+        @attachment.update(attachment_attributes)
+        if attachment_attributes['file'].present?
+          handle_uploader_response(status: :accepted)
+        else
+          render_errors_or_redirect(
+            @attachment,
+            admin_attachments_path(search_filter_params),
+            Alchemy.t("File successfully updated")
+          )
+        end
       end
 
       def destroy
         name = @attachment.name
         @attachment.destroy
-        @url = admin_attachments_url(
-          per_page: params[:per_page],
-          page: params[:page],
-          q: params[:q]
-        )
+        @url = admin_attachments_url(search_filter_params)
         flash[:notice] = Alchemy.t('File deleted successfully', name: name)
       end
 
@@ -75,16 +69,20 @@ module Alchemy
 
       private
 
-      def in_overlay?
-        params[:content_id].present?
+      def search_filter_params
+        @_search_filter_params ||= params.except(*COMMON_SEARCH_FILTER_EXCLUDES + [:attachment]).permit(
+          *common_search_filter_includes + [
+            :file_type,
+            :content_id
+          ]
+        )
       end
 
-      def archive_overlay
-        @content = Content.find_by(id: params[:content_id])
-        @options = options_from_params
-        respond_to do |format|
-          format.html { render partial: 'archive_overlay' }
-          format.js   { render action:  'archive_overlay' }
+      def handle_uploader_response(status:)
+        if @attachment.valid?
+          render successful_uploader_response(file: @attachment, status: status)
+        else
+          render failed_uploader_response(file: @attachment)
         end
       end
 

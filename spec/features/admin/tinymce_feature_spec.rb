@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'TinyMCE Editor' do
@@ -7,12 +9,9 @@ describe 'TinyMCE Editor' do
 
   it 'base path should be set to tinymce asset folder' do
     visit admin_dashboard_path
-    expect(page).to have_content <<-TINYMCE
-var tinyMCEPreInit = {
-  base: '/assets/tinymce',
-  suffix: '.min'
-};
-TINYMCE
+    expect(page).to have_content(
+      "var tinyMCEPreInit = { base: '/assets/tinymce', suffix: '.min' };"
+    )
   end
 
   context 'with asset host' do
@@ -22,12 +21,9 @@ TINYMCE
 
     it 'base path should be set to tinymce asset folder' do
       visit admin_dashboard_path
-      expect(page).to have_content <<-TINYMCE
-var tinyMCEPreInit = {
-  base: 'http://www.example.com/assets/tinymce',
-  suffix: '.min'
-};
-TINYMCE
+      expect(page).to have_content(
+        "var tinyMCEPreInit = { base: 'http://www.example.com/assets/tinymce', suffix: '.min' };"
+      )
     end
   end
 end

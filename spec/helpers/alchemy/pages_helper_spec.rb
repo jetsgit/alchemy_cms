@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -104,13 +105,15 @@ module Alchemy
         end
       end
 
-      context "with id and class in the html options" do
-        it "should append id to the generated ul tag" do
-          expect(helper.render_navigation({}, {id: 'foobar_id'})).to have_selector("ul[id='foobar_id']")
+      context "when passing html options" do
+        it "should append all given attributes to the generated ul tag" do
+          expect(helper.render_navigation({}, {id: 'foo', data: {navigation: 'main'} })).to have_selector("ul[id='foo'][data-navigation='main']")
         end
 
-        it "should replace the default css class from the generated ul tag" do
-          expect(helper.render_navigation({}, {class: 'foobar_class'})).to have_selector("ul[class='foobar_class']")
+        context "when overriding the `class` attribute" do
+          it "should replace the default css classes from the generated ul tag" do
+            expect(helper.render_navigation({}, {class: 'foo'})).to have_selector("ul[class='foo']")
+          end
         end
       end
 
@@ -288,7 +291,20 @@ module Alchemy
     end
 
     describe "#language_links" do
-      context "with two public languages" do
+      context "with another site, root page and language present" do
+        let!(:second_site) { create(:alchemy_site, name: "Other", host: "example.com") }
+        let!(:language_root_2) { create(:alchemy_page, :language_root, name: "Intro", language: klingon_2) }
+        let!(:public_page_2) { create(:alchemy_page, :public, language: klingon_2) }
+        let!(:klingon_2) { create(:alchemy_language, :klingon, site: second_site) }
+
+        before { klingon_language_root }
+
+        it 'should still only render two links' do
+          expect(helper.language_links).to have_selector('a', count: 2)
+        end
+      end
+
+      context "with two public languages on the same site" do
         # Always create second language
         before { klingon }
 

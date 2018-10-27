@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
 require 'spec_helper'
 
@@ -58,7 +58,7 @@ module Alchemy
           let(:other_parent) { create(:alchemy_page, parent_id: Page.root.id, visible: true) }
 
           before do
-            allow(Config).to receive(:get).and_return(true)
+            stub_alchemy_config(:url_nesting, true)
             with_same_urlname
           end
 
@@ -680,28 +680,25 @@ module Alchemy
     end
 
     describe '.find_or_create_layout_root_for' do
-      subject { Page.find_or_create_layout_root_for(language_id) }
+      subject { Page.find_or_create_layout_root_for(language.id) }
 
-      let(:language)    { mock_model('Language', name: 'English') }
-      let(:language_id) { language.id }
+      let!(:root_page) { create(:alchemy_page, :root) }
+      let(:language)   { create(:alchemy_language, name: 'English') }
 
-      before { allow(Language).to receive(:find).and_return(language) }
-
-      context 'if no layout root page for given language id could be found' do
-        before do
-          expect(Page).to receive(:create!).and_return(page)
-        end
-
+      context 'if no layout root page for given language id is present' do
         it "creates one" do
-          is_expected.to eq(page)
+          expect {
+            subject
+          }.to change { Page.count }.by(1)
         end
       end
 
-      context 'if layout root page for given language id could be found' do
-        let(:page) { mock_model('Page') }
-
-        before do
-          expect(Page).to receive(:layout_root_for).and_return(page)
+      context 'if layout root page for given language id is present' do
+        let!(:page) do
+          create :alchemy_page,
+            layoutpage: true,
+            parent_id: root_page.id,
+            language_id: language.id
         end
 
         it "returns layout root page" do
@@ -784,9 +781,25 @@ module Alchemy
       end
     end
 
-    describe '.rootpage' do
-      it "should contain one rootpage" do
-        expect(Page.rootpage).to be_instance_of(Page)
+    describe '.root' do
+      context 'when root page is present' do
+        let!(:root_page) { Page.root }
+
+        it 'returns root page' do
+          expect(Page.root).to eq(root_page)
+        end
+      end
+
+      context 'when no root page is present yet' do
+        before do
+          Page.delete_all
+        end
+
+        it "creates and returns root page" do
+          expect {
+            Page.root
+          }.to change { Page.count }.by(1)
+        end
       end
     end
 
@@ -871,6 +884,29 @@ module Alchemy
 
         it "should be ignored if unique" do
           expect(page.available_element_definitions.collect { |e| e['name'] }).not_to include('unique_headline')
+        end
+      end
+    end
+
+    describe '#available_elements_within_current_scope' do
+      let(:page) { build_stubbed(:alchemy_page, page_layout: 'columns') }
+      let(:nestable_element) { create(:alchemy_element, :with_nestable_elements) }
+      let(:currently_available_elements) { page.available_elements_within_current_scope(nestable_element) }
+
+      context "When unique element is already nested" do
+        before do
+          nestable_element.nested_elements << create(:alchemy_element, name: 'slide', unique: true)
+          page.elements << nestable_element
+        end
+
+        it "returns no available elements" do
+          expect(currently_available_elements).to eq([])
+        end
+      end
+
+      context "When unique element has not be nested" do
+        it "returns available elements" do
+          expect(currently_available_elements.collect { |e| e['name'] }).to include('slide')
         end
       end
     end
@@ -1016,6 +1052,37 @@ module Alchemy
       it "returns all element definitions that could be placed on current page" do
         is_expected.to include({'name' => 'article'})
         is_expected.to include({'name' => 'header'})
+      end
+    end
+
+    describe '#descendent_element_definitions' do
+      let(:page) { build_stubbed(:alchemy_page, page_layout: 'standard') }
+
+      subject(:descendent_element_definitions) { page.descendent_element_definitions }
+
+      it "returns all element definitions including the nestable element definitions" do
+        is_expected.to include(Alchemy::Element.definition_by_name('slider'))
+        is_expected.to include(Alchemy::Element.definition_by_name('slide'))
+      end
+
+      context 'with nestable element being defined on multiple elements' do
+        before do
+          expect(page).to receive(:element_definition_names) do
+            %w(slider gallery)
+          end
+          expect(Element).to receive(:definitions).at_least(:once) do
+            [
+              {'name' => 'slider', 'nestable_elements' => %w(slide)},
+              {'name' => 'gallery', 'nestable_elements' => %w(slide)},
+              {'name' => 'slide'}
+            ]
+          end
+        end
+
+        it 'only includes the definition once' do
+          slide_definitions = descendent_element_definitions.select { |d| d['name'] == 'slide' }
+          expect(slide_definitions.length).to eq(1)
+        end
       end
     end
 
@@ -1485,6 +1552,117 @@ module Alchemy
       end
     end
 
+    describe '#editable_by?' do
+      subject { page.editable_by?(user) }
+
+      let(:user) { mock_model('DummyUser') }
+      let(:page) { create(:alchemy_page) }
+
+      context "template defines one alchemy role" do
+        before do
+          allow(page).to receive(:definition).and_return({"editable_by" => ["freelancer"]})
+        end
+
+        context 'user has matching alchemy role' do
+          before do
+            allow(user).to receive(:alchemy_roles).at_least(:once) { ["freelancer"] }
+          end
+
+          it { is_expected.to be(true) }
+        end
+        context 'user has a different alchemy role' do
+          before do
+            allow(user).to receive(:alchemy_roles).at_least(:once) { ["editor"] }
+          end
+
+          it { is_expected.to be(false) }
+        end
+      end
+
+      context "template defines multiple alchemy roles" do
+        before do
+          allow(page).to receive(:definition).and_return({"editable_by" => ["freelancer", "admin"]})
+        end
+
+        context 'user has matching alchemy role' do
+          before do
+            allow(user).to receive(:alchemy_roles).at_least(:once) { ["freelancer", "member"] }
+          end
+
+          it { is_expected.to be(true) }
+        end
+        context 'user has a different alchemy role' do
+          before do
+            allow(user).to receive(:alchemy_roles).at_least(:once) { ["editor", "leader"] }
+          end
+
+          it { is_expected.to be(false) }
+        end
+      end
+
+      context "template has no alchemy role defined" do
+        before do
+          allow(page).to receive(:definition).and_return({})
+        end
+
+        context 'user has matching alchemy role' do
+          before do
+            allow(user).to receive(:alchemy_roles).at_least(:once) { ["freelancer", "member"] }
+          end
+
+          it { is_expected.to be(true) }
+        end
+      end
+    end
+
+    describe '#public_on' do
+      subject(:public_on) { page.public_on }
+
+      context 'when is fixed attribute' do
+        let(:page) do
+          create(:alchemy_page, page_layout: 'readonly')
+        end
+
+        it 'returns the fixed value' do
+          is_expected.to eq(nil)
+        end
+      end
+
+      context 'when is not fixed attribute' do
+        let(:page) do
+          create(:alchemy_page, page_layout: 'standard', public_on: '2016-11-01')
+        end
+
+        it 'returns value' do
+          is_expected.to eq('2016-11-01'.to_time(:utc))
+        end
+      end
+    end
+
+    describe '#public_until' do
+      subject(:public_until) { page.public_until }
+
+      context 'when is fixed attribute' do
+        let(:page) do
+          create(:alchemy_page, page_layout: 'readonly')
+        end
+
+        it 'returns the fixed value' do
+          is_expected.to eq(nil)
+        end
+      end
+
+      context 'when is not fixed attribute' do
+        let(:page) do
+          create(:alchemy_page, page_layout: 'standard', public_until: '2016-11-01')
+        end
+
+        it 'returns value' do
+          is_expected.to eq('2016-11-01'.to_time(:utc))
+        end
+      end
+    end
+
     describe '#public?' do
       subject { page.public? }
 
@@ -1706,7 +1884,9 @@ module Alchemy
       let(:language_root) { parentparent.parent }
 
       context "with activated url_nesting" do
-        before { allow(Config).to receive(:get).and_return(true) }
+        before do
+          stub_alchemy_config(:url_nesting, true)
+        end
 
         it "should store all parents urlnames delimited by slash" do
           expect(page.urlname).to eq('parentparent/parent/page')
@@ -1777,7 +1957,9 @@ module Alchemy
       end
 
       context "with disabled url_nesting" do
-        before { allow(Config).to receive(:get).and_return(false) }
+        before do
+          stub_alchemy_config(:url_nesting, false)
+        end
 
         it "should only store my urlname" do
           expect(page.urlname).to eq('page')
@@ -1791,7 +1973,9 @@ module Alchemy
       let(:node) { TreeNode.new(10, 11, 12, 13, "another-url", true) }
 
       context "when nesting is enabled" do
-        before { allow(Alchemy::Config).to receive(:get).with(:url_nesting) { true } }
+        before do
+          stub_alchemy_config(:url_nesting, true)
+        end
 
         context "when page is not external" do
           before do
@@ -1856,7 +2040,7 @@ module Alchemy
 
       context "when nesting is disabled" do
         before do
-          allow(Alchemy::Config).to receive(:get).with(:url_nesting) { false }
+          stub_alchemy_config(:url_nesting, false)
         end
 
         context "when page is not external" do
@@ -1884,7 +2068,6 @@ module Alchemy
 
         context "when page is external" do
           before do
-            expect(Alchemy::Config).to receive(:get).and_return(true)
             allow(page).to receive(:redirects_to_external?).and_return(true)
           end
 
@@ -1925,7 +2108,7 @@ module Alchemy
       end
 
       it 'returns false when caching is deactivated in the Alchemy config' do
-        allow(Alchemy::Config).to receive(:get).with(:cache_pages).and_return(false)
+        stub_alchemy_config(:cache_pages, false)
         expect(subject).to be false
       end
 
@@ -2211,20 +2394,20 @@ module Alchemy
 
     describe '#published_at' do
       context 'with published_at date set' do
-        let(:published_at) { Time.current }
+        let(:published_at) { 3.days.ago }
         let(:page)         { build_stubbed(:alchemy_page, published_at: published_at) }
 
         it "returns the published_at value from database" do
-          expect(page.published_at).to eq(published_at)
+          expect(page.published_at).to be_within(1.second).of(published_at)
         end
       end
 
       context 'with published_at is nil' do
-        let(:updated_at) { Time.current }
+        let(:updated_at) { 3.days.ago }
         let(:page)       { build_stubbed(:alchemy_page, published_at: nil, updated_at: updated_at) }
 
         it "returns the updated_at value" do
-          expect(page.published_at).to eq(updated_at)
+          expect(page.published_at).to be_within(1.second).of(updated_at)
         end
       end
     end
@@ -2286,6 +2469,35 @@ module Alchemy
           nested_folded_rtf_content = nested_folded_element.contents.essence_richtexts.first
 
           expect(richtext_contents_ids).to_not include(nested_folded_rtf_content.id)
+        end
+      end
+    end
+
+    describe '#fixed_attributes' do
+      let(:page) { Alchemy::Page.new }
+
+      it 'holds an instance of FixedAttributes' do
+        expect(page.fixed_attributes).to be_a(Alchemy::Page::FixedAttributes)
+      end
+    end
+
+    describe '#attribute_fixed?' do
+      let(:page) { Alchemy::Page.new }
+
+      it 'delegates to instance of FixedAttributes' do
+        expect_any_instance_of(Alchemy::Page::FixedAttributes).to receive(:fixed?).with('yolo')
+        page.attribute_fixed?('yolo')
+      end
+    end
+
+    describe '#set_fixed_attributes' do
+      context 'when fixed attributes are defined' do
+        let(:page) { create(:alchemy_page, page_layout: 'readonly') }
+
+        it 'sets them before each save' do
+          expect {
+            page.update(name: 'Foo')
+          }.to_not change { page.name }
         end
       end
     end

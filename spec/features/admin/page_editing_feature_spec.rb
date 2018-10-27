@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Page editing feature' do
@@ -55,9 +57,7 @@ describe 'Page editing feature' do
 
         context "with sitemaps show_flag config option set to true" do
           before do
-            allow(Alchemy::Config).to receive(:get) do |arg|
-              arg == :sitemap ? {'show_flag' => true} : Alchemy::Config.show[arg.to_s]
-            end
+            stub_alchemy_config(:sitemap, {'show_flag' => true})
           end
 
           it "should show sitemap checkbox" do
@@ -68,9 +68,7 @@ describe 'Page editing feature' do
 
         context "with sitemaps show_flag config option set to false" do
           before do
-            allow(Alchemy::Config).to receive(:get) do |arg|
-              arg == :sitemap ? {'show_flag' => false} : Alchemy::Config.show[arg.to_s]
-            end
+            stub_alchemy_config(:sitemap, {'show_flag' => false})
           end
 
           it "should not show sitemap checkbox" do
@@ -132,10 +130,46 @@ describe 'Page editing feature' do
         expect(page).to have_selector('div.content_editor.essence_file')
         expect(page).to have_selector('div.content_editor.essence_html_editor')
         expect(page).to have_selector('div.content_editor.essence_link')
-        expect(page).to have_selector('div.content_editor.essence_picture_editor')
+        expect(page).to have_selector('div.content_editor.essence_picture')
         expect(page).to have_selector('div.content_editor.essence_richtext')
         expect(page).to have_selector('div.content_editor.essence_select')
         expect(page).to have_selector('div.content_editor.essence_text')
+      end
+    end
+  end
+
+  describe "configure properties", js: true do
+    before { authorize_user(:as_admin) }
+    let!(:a_page) { create(:alchemy_page) }
+
+    context "when updating the name" do
+      it "saves the name" do
+        visit alchemy.admin_pages_path
+        find(".sitemap_page[name='#{a_page.name}'] .icon.fa-cog").click
+        expect(page).to have_selector(".alchemy-dialog-overlay.open")
+        within(".alchemy-dialog.modal") do
+          find("input#page_name").set("name with some %!x^)'([@!{}]|/?\:# characters")
+          find(".submit button").click
+        end
+        expect(page).to_not have_selector(".alchemy-dialog-overlay.open")
+        expect(page).to have_selector("#sitemap a.sitemap_pagename_link", text: "name with some %!x^)'([@!{}]|/?\:# characters")
+      end
+    end
+  end
+
+  describe "fixed attributes" do
+    before { authorize_user(:as_author) }
+
+    context "when page has fixed attributes" do
+      let!(:readonly_page) do
+        create(:alchemy_page, page_layout: 'readonly')
+      end
+
+      it 'is not possible to edit the attribute', :aggregate_failures do
+        visit alchemy.configure_admin_page_path(readonly_page)
+        readonly_page.fixed_attributes.all.each do |attribute, _v|
+          expect(page).to have_selector("#page_#{attribute}[disabled=\"disabled\"]")
+        end
       end
     end
   end

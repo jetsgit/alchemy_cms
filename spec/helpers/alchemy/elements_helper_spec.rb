@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 include Alchemy::BaseHelper
 
@@ -48,7 +50,7 @@ module Alchemy
           let(:element) { build_stubbed(:alchemy_element, name: 'not_present') }
 
           it "renders the editor not found partial" do
-            is_expected.to have_selector('div.error')
+            is_expected.to have_selector('div.warning')
             is_expected.to have_content('Element editor partial not found')
           end
         end
@@ -217,7 +219,7 @@ module Alchemy
         before { assign(:preview_mode, true) }
 
         it "should return the data-alchemy-element HTML attribute for element" do
-          is_expected.to eq({:'data-alchemy-element' => element.id})
+          is_expected.to eq({'data-alchemy-element' => element.id})
         end
       end
 

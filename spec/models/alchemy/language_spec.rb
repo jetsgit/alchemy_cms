@@ -1,4 +1,5 @@
-# encoding: UTF-8
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -144,6 +145,8 @@ module Alchemy
       end
 
       context "with multiple sites having languages with same code" do
+        let!(:default_site) { create(:alchemy_site, :default) }
+
         let!(:current_site) do
           create(:alchemy_site, host: 'other.com')
         end

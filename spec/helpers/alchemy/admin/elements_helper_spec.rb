@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -9,10 +11,6 @@ module Alchemy
       it "should render an element editor partial" do
         expect(helper).to receive(:render_element).with(element, :editor)
         helper.render_editor(element)
-      end
-
-      it "should render a picture gallery editor partial" do
-        expect(render_picture_gallery_editor(element)).to match(/class=".+picture_gallery_editor"/)
       end
     end
 

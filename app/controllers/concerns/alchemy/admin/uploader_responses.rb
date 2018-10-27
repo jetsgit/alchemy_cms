@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     module UploaderResponses
       extend ActiveSupport::Concern
 
-      def succesful_uploader_response(file:)
+      def successful_uploader_response(file:, status: :created)
         message = Alchemy.t(:upload_success,
           scope: [:uploader, file.class.model_name.i18n_key],
           name: file.name
@@ -11,7 +13,7 @@ module Alchemy
 
         {
           json: uploader_response(file: file, message: message),
-          status: :created
+          status: status
         }
       end
 

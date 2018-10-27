@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Page::PageNatures
     extend ActiveSupport::Concern
@@ -20,7 +22,7 @@ module Alchemy
     end
 
     def systempage?
-      return true if Page.root.nil?
+      return true if Page.count.zero?
       rootpage? || (parent_id == Page.root.id && !language_root?)
     end
 
@@ -31,6 +33,25 @@ module Alchemy
 
     def contains_feed?
       definition["feed"]
+    end
+
+    # Returns an Array of Alchemy roles which are able to edit this template
+    #
+    #     # config/alchemy/page_layouts.yml
+    #     - name: contact
+    #       editable_by:
+    #         - freelancer
+    #         - admin
+    #
+    # @returns Array
+    #
+    def has_limited_editors?
+      definition["editable_by"].present?
+    end
+
+    def editor_roles
+      return unless has_limited_editors?
+      definition["editable_by"]
     end
 
     # Returns true or false if the pages definition for config/alchemy/page_layouts.yml contains redirects_to_external: true
@@ -77,7 +98,6 @@ module Alchemy
 
     # Returns the self#page_layout definition from config/alchemy/page_layouts.yml file.
     def definition
-      return {} if systempage?
       definition = PageLayout.get(page_layout)
       if definition.nil?
         log_warning "Page definition for `#{page_layout}` not found. Please check `page_layouts.yml` file."

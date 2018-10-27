@@ -1,32 +1,33 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Alchemy::Admin::BaseController do
   describe '#options_from_params' do
     subject { controller.send(:options_from_params) }
 
-    context "params[:options] is a JSON string" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return(options: '{"hallo":"World"}') }
-
-      it "parses the string into an object" do
-        expect(subject).to be_an_instance_of(Hash)
-        expect(subject).to eq({hallo: 'World'})
+    before do
+      expect(controller).to receive(:params).at_least(:once) do
+        ActionController::Parameters.new(options: options)
       end
     end
 
-    context "params[:options] is already an object" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return(options: {hallo: "World"}) }
+    context "params[:options] are Rails parameters" do
+      let(:options) do
+        ActionController::Parameters.new('hello' => 'world')
+      end
 
-      it "parses the string into an object" do
-        expect(subject).to be_an_instance_of(Hash)
+      it "returns the options as permitted parameters with indifferent access" do
+        expect(subject).to be_permitted
+        expect(subject[:hello]).to eq('world')
       end
     end
 
-    context "params[:options] is not present" do
-      before { expect(controller).to receive(:params).at_least(:once).and_return({}) }
+    context "params[:options] is nil" do
+      let(:options) { nil }
 
-      it "returns ampty object" do
-        expect(subject).to be_an_instance_of(Hash)
-        expect(subject).to eq({})
+      it "returns an empty permitted parameters hash" do
+        is_expected.to eq(ActionController::Parameters.new.permit!)
       end
     end
   end

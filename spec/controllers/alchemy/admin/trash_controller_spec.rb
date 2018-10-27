@@ -1,8 +1,12 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
   module Admin
     describe TrashController do
+      routes { Alchemy::Engine.routes }
+
       render_views
 
       let(:alchemy_page) { create(:alchemy_page, :public) }
@@ -14,13 +18,13 @@ module Alchemy
       }
 
       it "should hold trashed elements" do
-        alchemy_get :index, page_id: alchemy_page.id
+        get :index, params: {page_id: alchemy_page.id}
         expect(response.body).to have_selector("#element_#{element.id}.element-editor")
       end
 
       it "should not hold elements that are not trashed" do
         element = create(:alchemy_element, page: alchemy_page, public: false)
-        alchemy_get :index, page_id: alchemy_page.id
+        get :index, params: {page_id: alchemy_page.id}
         expect(response.body).not_to have_selector("#element_#{element.id}.element-editor")
       end
 
@@ -34,7 +38,7 @@ module Alchemy
           end
 
           it "unique elements should be draggable" do
-            alchemy_get :index, page_id: alchemy_page.id
+            get :index, params: {page_id: alchemy_page.id}
             expect(response.body).to have_selector("#element_#{trashed.id}.element-editor.draggable")
           end
         end
@@ -49,7 +53,7 @@ module Alchemy
           end
 
           it "unique elements should not be draggable" do
-            alchemy_get :index, page_id: page.id
+            get :index, params: {page_id: page.id}
             expect(response.body).to have_selector("#element_#{trashed.id}.element-editor.not-draggable")
           end
         end
@@ -58,7 +62,7 @@ module Alchemy
       describe "#clear" do
         it "should destroy all containing elements" do
           expect(Element.trashed).not_to be_empty
-          alchemy_xhr :post, :clear, page_id: alchemy_page.id
+          post :clear, params: {page_id: alchemy_page.id}, xhr: true
           expect(Element.trashed).to be_empty
         end
       end

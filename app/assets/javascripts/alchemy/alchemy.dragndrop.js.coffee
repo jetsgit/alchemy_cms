@@ -1,5 +1,5 @@
-#= require jquery-ui/draggable
-#= require jquery-ui/sortable
+#= require jquery-ui/widgets/draggable
+#= require jquery-ui/widgets/sortable
 #
 window.Alchemy = {} if typeof (window.Alchemy) is "undefined"
 
@@ -25,7 +25,7 @@ $.extend Alchemy,
       opacity: 0.5
       cursor: "move"
       containment: $('#element_area')
-      tolerance: "intersect"
+      tolerance: "pointer"
       update: (event, ui) ->
         # This callback is called twice for both elements, the source and the receiving
         # but, we only want to call ajax callback once on the receiving element.
@@ -63,6 +63,10 @@ $.extend Alchemy,
         $this.sortable('option', 'connectWith', $dropzone)
         $this.sortable('refresh')
         $dropzone.css('minHeight', 36)
+        ui.item.addClass('dragged')
+        if ui.item.hasClass('compact')
+          ui.placeholder.addClass('compact').css
+            height: ui.item.outerHeight()
         Alchemy.Tinymce.remove(ids)
         return
       stop: (event, ui) ->
@@ -70,31 +74,13 @@ $.extend Alchemy,
         name = ui.item.data('element-name')
         $dropzone = $("[data-droppable-elements~='#{name}']")
         $dropzone.css('minHeight', '')
+        ui.item.removeClass('dragged')
         Alchemy.Tinymce.init(ids)
         return
 
     $sortable_area.sortable(sortable_options)
     $sortable_area.find('.nested-elements').sortable(sortable_options)
     return
-
-  SortableContents: (selector, token) ->
-    $(selector).sortable
-      items: "div.dragable_picture"
-      handle: "div.picture_handle"
-      opacity: 0.5
-      cursor: "move"
-      tolerance: "pointer"
-      containment: "parent"
-      update: (event, ui) ->
-        ids = $.map $(this).children("div.dragable_picture"), (child) ->
-          child.id.replace /essence_picture_/, ""
-        $(event.originalTarget).css "cursor", "progress"
-        $.ajax
-          url: Alchemy.routes.order_admin_contents_path
-          type: "POST"
-          data: "authenticity_token=" + encodeURIComponent(token) + "&" + $.param(content_ids: ids)
-          complete: ->
-            $(event.originalTarget).css "cursor", "move"
 
   DraggableTrashItems: ->
     $("#trash_items div.draggable").each ->

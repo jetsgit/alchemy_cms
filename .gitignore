@@ -22,3 +22,4 @@ spec/dummy/public/assets
 .ruby-version
 *.swp
 *.swo
+.env

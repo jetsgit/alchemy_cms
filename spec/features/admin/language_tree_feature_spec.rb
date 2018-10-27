@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Language tree feature', type: :feature, js: true do
@@ -15,7 +17,7 @@ describe 'Language tree feature', type: :feature, js: true do
 
     it "one should be able to switch the language tree" do
       visit('/admin/pages')
-      page.select 'Klingon', from: 'language_id'
+      select2 'Klingon', from: 'Language tree'
       expect(page).to have_selector('#sitemap', text: 'Klingon')
     end
   end
@@ -25,7 +27,7 @@ describe 'Language tree feature', type: :feature, js: true do
 
     it "displays a form for creating language root with preselected page layout and front page name" do
       visit('/admin/pages')
-      page.select 'Klingon', from: 'language_id'
+      select2 'Klingon', from: 'Language tree'
       expect(page).to have_content('This language tree does not exist')
 
       within('form#create_language_tree') do

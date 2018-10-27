@@ -1,4 +1,3 @@
-<% cache(content) do %>
 <div class="content_editor essence_date" id="<%= content.dom_id %>" data-content-id="<%= content.id %>">
   <%= content_label(content) %>
   <%= alchemy_datepicker(
@@ -8,8 +7,7 @@
       value: content.settings_value(:default_value, local_assigns.fetch(:options, {}))
     }
   ) %>
-  <label for="<%= content.form_field_id %>" style="cursor: pointer; display: inline; display: inline-block; position: relative; top: 3px; margin: 0;">
-    <span class="ui-icon ui-icon-calendar"></span>
+  <label for="<%= content.form_field_id %>" class="essence_date--label">
+    <i class="icon far fa-calendar-alt fa-fw fa-lg"></i>
   </label>
 </div>
-<% end %>

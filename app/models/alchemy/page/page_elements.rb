@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Page::PageElements
     extend ActiveSupport::Concern
@@ -17,13 +19,17 @@ module Alchemy
         through: :descendent_elements,
         class_name: 'Alchemy::Content',
         source: :contents
-      has_and_belongs_to_many :to_be_swept_elements, -> { uniq },
+      has_and_belongs_to_many :to_be_swept_elements, -> { distinct },
         class_name: 'Alchemy::Element',
         join_table: ElementToPage.table_name
 
       after_create :autogenerate_elements, unless: -> { systempage? || do_not_autogenerate }
-      after_update :trash_not_allowed_elements!, if: :page_layout_changed?
-      after_update :autogenerate_elements, if: :page_layout_changed?
+
+      after_update :trash_not_allowed_elements!,
+        if: :has_page_layout_changed?
+
+      after_update :autogenerate_elements,
+        if: :has_page_layout_changed?
     end
 
     module ClassMethods
@@ -134,6 +140,19 @@ module Alchemy
       @_available_element_names ||= available_element_definitions.map { |e| e['name'] }
     end
 
+    # Available element definitions excluding nested unique elements.
+    #
+    def available_elements_within_current_scope(parent)
+      @_available_elements = if parent
+        parents_unique_nested_elements = parent.nested_elements.where(unique: true).pluck(:name)
+        available_element_definitions(parent.name).reject do |e|
+          parents_unique_nested_elements.include? e['name']
+        end
+      else
+        available_element_definitions
+      end
+    end
+
     # All element definitions defined for page's page layout
     #
     # Warning: Since elements can be unique or limited in number,
@@ -141,6 +160,16 @@ module Alchemy
     #
     def element_definitions
       @_element_definitions ||= element_definitions_by_name(element_definition_names)
+    end
+
+    # All element definitions defined for page's page layout including nestable element definitions
+    #
+    def descendent_element_definitions
+      definitions = element_definitions_by_name(element_definition_names)
+      definitions.select { |d| d.key?('nestable_elements') }.each do |d|
+        definitions += element_definitions_by_name(d['nestable_elements'])
+      end
+      definitions.uniq { |d| d['name'] }
     end
 
     # All names of elements that are defined in the corresponding
@@ -251,6 +280,14 @@ module Alchemy
       not_allowed_elements.to_a.map(&:trash!)
     end
 
+    def has_page_layout_changed?
+      if active_record_5_1?
+        saved_change_to_page_layout?
+      else
+        page_layout_changed?
+      end
+    end
+
     # Deletes unique and already present definitions from @_element_definitions.
     #
     def delete_unique_element_definitions!
@@ -287,7 +324,7 @@ module Alchemy
       if cell = cells.find_by_name(name)
         cell.elements
       else
-        Alchemy::Logger.warn("Cell with name `#{name}` could not be found!", caller.first)
+        Alchemy::Logger.warn("Cell with name `#{name}` could not be found!", caller(0..0))
         Element.none
       end
     end

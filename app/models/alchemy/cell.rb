@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_cells
 #
 #  id         :integer          not null, primary key
-#  page_id    :integer
-#  name       :string(255)
+#  page_id    :integer          not null
+#  name       :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
@@ -22,10 +24,10 @@
 # Views for cells are inside the +app/views/cells+ folder in your project.
 #
 module Alchemy
-  class Cell < ActiveRecord::Base
+  class Cell < BaseRecord
     include Alchemy::Logger
 
-    belongs_to :page, required: true
+    belongs_to :page, inverse_of: :cells
     validates_uniqueness_of :name, scope: 'page_id'
     validates_format_of :name, with: /\A[a-z0-9_-]+\z/
     has_many :elements, -> { where(parent_element_id: nil).order(:position) }, dependent: :destroy
@@ -56,7 +58,7 @@ module Alchemy
       private
 
       def read_yml_file
-        ::YAML.load(ERB.new(File.read(yml_file_path)).result) || []
+        ::YAML.safe_load(ERB.new(File.read(yml_file_path)).result, YAML_WHITELIST_CLASSES, [], true) || []
       end
 
       def yml_file_path

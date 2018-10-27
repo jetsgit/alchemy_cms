@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   # This helpers are useful to render elements from pages.
   #
@@ -185,13 +187,18 @@ module Alchemy
 
     # Renders the HTML tag attributes required for preview mode.
     def element_preview_code(element)
-      tag_options(element_preview_code_attributes(element))
+      if respond_to?(:tag_options)
+        tag_options(element_preview_code_attributes(element))
+      else
+        # Rails 5.1 uses TagBuilder
+        tag_builder.tag_options(element_preview_code_attributes(element))
+      end
     end
 
     # Returns a hash containing the HTML tag attributes required for preview mode.
     def element_preview_code_attributes(element)
       return {} unless element.present? && @preview_mode && element.page == @page
-      { :'data-alchemy-element' => element.id }
+      { 'data-alchemy-element' => element.id }
     end
 
     # Returns the element's tags information as a string. Parameters and options
@@ -203,7 +210,12 @@ module Alchemy
     #   HTML tag attributes containing the element's tag information.
     #
     def element_tags(element, options = {})
-      tag_options(element_tags_attributes(element, options))
+      if respond_to?(:tag_options)
+        tag_options(element_tags_attributes(element, options))
+      else
+        # Rails 5.1 uses TagBuilder
+        tag_builder.tag_options(element_tags_attributes(element, options))
+      end
     end
 
     # Returns the element's tags information as an attribute hash.
@@ -223,7 +235,7 @@ module Alchemy
       }.merge(options)
 
       return {} if !element.taggable? || element.tag_list.blank?
-      { :'data-element-tags' => options[:formatter].call(element.tag_list) }
+      { 'data-element-tags' => options[:formatter].call(element.tag_list) }
     end
 
     # Sort given elements by content.

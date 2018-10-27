@@ -8,16 +8,11 @@ div#overlay {
   z-index: 400000;
   background-color: rgba(229, 229, 229, 0.4);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr = #40E5E5E5, endColorstr = #40E5E5E5);
-
-  .spinner {
-    top: 50%;
-    left: 50%;
-  }
 }
 
 div#overlay_text_box {
   color: #333333;
-  font-size: 18px;
+  font-size: 1.5em;
   left: 50%;
   line-height: 120px;
   margin-left: -100px;
@@ -34,53 +29,27 @@ div#overlay_text_box {
 }
 
 #logout {
-  box-sizing: border-box;
   position: absolute;
   z-index: 1;
   bottom: 0;
   left: 0;
-  width: $main-menu-width;
-  background-color: $main-menu-bg-color;
-  border-right: $default-border;
-  transition: background-color $transition-duration $transition-easing;
+  width: 100%;
+  margin-bottom: 0;
 
-  &:hover {
-    background-color: $main-menu-active-bg-color;
-  }
-
-  .collapsed-menu & {
-    width: $collapsed-main-menu-width;
-  }
-
-  a {
-    display: block;
-    padding-left: 3 * $default-padding;
-    line-height: 45px;
-
-    &:hover {
-      text-decoration: none;
-    }
-
-    label {
-      padding-left: 2 * $default-padding;
-    }
-  }
-
-  img {
-    margin-bottom: 4px;
+  &:not(:hover) {
+    background-color: $main-menu-bg-color;
   }
 }
 
 #header {
   height: $header-height;
   line-height: $header-height;
-  background: $light-blue;
+  background: $header-background;
   border-bottom: $default-border;
   position: relative;
 
   a {
     display: inline-block;
-    vertical-align: middle;
 
     &:hover {
       text-decoration: none;
@@ -95,6 +64,15 @@ div#overlay_text_box {
     @extend .locked_page;
     cursor: default;
     border-bottom-color: $toolbar-bg-color;
+
+    .hint-bubble {
+      left: -40px;
+      transform: none;
+
+      &:before {
+        left: 47px;
+      }
+    }
   }
 
   .page_name {
@@ -104,8 +82,6 @@ div#overlay_text_box {
 }
 
 #main_content {
-  box-sizing: border-box;
-  background-color: $light-gray;
   padding: 84px 8px 8px $main-menu-width + 10px;
   z-index: 0;
   width: 100%;
@@ -113,26 +89,16 @@ div#overlay_text_box {
 }
 
 #archive_all {
-  box-sizing: border-box;
   height: 100%;
-  padding-bottom: 60px;
 
   &.with_tag_filter {
 
     table {
-      padding-right: 230px;
+      padding-right: 242px;
     }
 
     > .info {
-      margin-right: 230px;
-    }
-  }
-
-  &.resources-table-wrapper {
-    padding-top: 47px;
-
-    > table {
-      padding-bottom: 60px;
+      margin-right: 242px;
     }
   }
 }
@@ -142,49 +108,26 @@ div#overlay_text_box {
   top: 0;
   right: 0;
   height: $header-height;
-  font-size: 11px;
+  font-size: $small-font-size;
   padding-left: 2*$default-padding;
-  background-color: $light-blue;
   border-bottom: $default-border;
+  background-color: $header-background;
 
-  .select2-container {
+  .select2-container, select {
+    height: $form-field-height;
     margin-top: -3px;
-    padding-right: 2*$default-padding;
   }
 
-  .select2-choice {
-    padding-right: 0;
+  .select2-choice, select {
     background: transparent;
-    box-shadow: none;
     border: none;
     border-radius: 0;
     border-left: $default-border;
-    height: $header-height + 1;
-    line-height: $header-height;
-    text-shadow: $text-shadow-light;
-
-    .select2-arrow {
-      width: 14px;
-      border-left: none;
-
-      b {
-        color: $muted-text-color;
-
-        &:before {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-      }
-    }
+    height: $header-height;
   }
 
-  .select2-dropdown-open {
-    background-color: $main-menu-bg-color;
-
-    .select2-choice .select2-arrow b {
-      background-position: -20px -5px;
-    }
+ .select2-choice {
+    line-height: 2;
   }
 
   .current-user-name {
@@ -193,11 +136,10 @@ div#overlay_text_box {
 }
 
 #locked_pages {
-  overflow: hidden;
 
   label {
     float: left;
-    font-size: 10px;
+    font-size: $small-font-size;
     line-height: 27px;
     height: 27px;
     margin-left: 8px;

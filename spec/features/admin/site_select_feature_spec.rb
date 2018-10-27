@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Site select' do
@@ -13,6 +15,7 @@ describe 'Site select' do
   end
 
   context "with multiple sites" do
+    let!(:default_site) { create(:alchemy_site, :default) }
     let!(:a_site) { create(:alchemy_site) }
 
     context "not on pages or languages module" do

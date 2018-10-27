@@ -34,8 +34,8 @@ $.extend Alchemy,
   pleaseWaitOverlay: (show = true) ->
     $overlay = $('#overlay')
     if show
-      spinner = Alchemy.Spinner.medium()
-      $overlay.append(spinner.spin().el)
+      spinner = new Alchemy.Spinner('medium')
+      spinner.spin $overlay
       $overlay.show()
     else
       $overlay.find('.spinner').remove()
@@ -44,12 +44,12 @@ $.extend Alchemy,
 
   # Shows spinner while loading images and
   # fades the image after its been loaded
-  ImageLoader: (scope = document, options = {color: '#fff'}) ->
+  ImageLoader: (scope = document, options = {fill: '#fff'}) ->
     $('img', scope).each ->
       if !this.complete
         image = $(this).hide()
         $parent = image.parent()
-        spinner = Alchemy.Spinner.small options
+        spinner = new Alchemy.Spinner('small', options)
         spinner.spin $parent[0]
         image.on 'load', ->
           spinner.stop()
@@ -62,10 +62,9 @@ $.extend Alchemy,
   removePicture: (selector) ->
     $form_field = $(selector)
     $element = $form_field.closest(".element-editor")
-    if $form_field
+    if $form_field[0]
       $form_field.val ""
-      $form_field.prev().remove()
-      $form_field.parent().addClass "missing"
+      $element.find(".thumbnail_background").html('<i class="icon far fa-image fa-fw"/>')
       Alchemy.setElementDirty $element
     false
 
@@ -75,10 +74,6 @@ $.extend Alchemy,
     $("select.alchemy_selectbox", scope).select2
       minimumResultsForSearch: 7
       dropdownAutoWidth: true
-    return
-
-  Buttons: (options) ->
-    $("button, input:submit, a.button").button options
     return
 
   # Selects cell tab for given name.
@@ -108,8 +103,7 @@ $.extend Alchemy,
   # Logs exception to js console, if present.
   debug: (e) ->
     if window["console"]
-      console.debug e
-      console.trace()
+      console.warn(e)
     return
 
   # Logs errors to js console, if present.

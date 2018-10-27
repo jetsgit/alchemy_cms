@@ -15,11 +15,7 @@ Alchemy::Engine.routes.draw do
   end
 
   namespace :admin, {path: Alchemy.admin_path, constraints: Alchemy.admin_constraints} do
-    resources :contents do
-      collection do
-        post :order
-      end
-    end
+    resources :contents, only: [:create]
 
     resources :pages do
       resources :elements
@@ -61,7 +57,7 @@ Alchemy::Engine.routes.draw do
 
     resources :pictures, except: [:new] do
       collection do
-        post :flush, :update_multiple
+        post :update_multiple
         delete :delete_multiple
         get :edit_multiple
       end
@@ -117,6 +113,8 @@ Alchemy::Engine.routes.draw do
     end
 
     resources :sites
+
+    get '/styleguide' => 'styleguide#index'
   end
 
   get '/attachment/:id/download(/:name)' => 'attachments#download',
@@ -139,6 +137,9 @@ Alchemy::Engine.routes.draw do
     resources :pages, only: [:index] do
       get 'elements' => 'elements#index', as: 'elements'
       get 'elements/:named' => 'elements#index', as: 'named_elements'
+      collection do
+        get :nested
+      end
     end
 
     get '/pages/*urlname(.:format)' => 'pages#show', as: 'page'

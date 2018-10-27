@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Locked pages feature' do
@@ -12,7 +14,7 @@ describe 'Locked pages feature' do
     authorize_user(user)
   end
 
-  it 'displays tab for each locekd page' do
+  it 'displays tab for each locked page' do
     visit alchemy.admin_pages_path
 
     within '#locked_pages' do

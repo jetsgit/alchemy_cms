@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class ElementsController < Alchemy::Admin::BaseController
@@ -25,7 +27,7 @@ module Alchemy
       def new
         @page = Page.find(params[:page_id])
         @parent_element = Element.find_by(id: params[:parent_element_id])
-        @elements = @page.available_element_definitions(@parent_element.try(:name))
+        @elements = @page.available_elements_within_current_scope(@parent_element)
         @element = @page.elements.build
         @clipboard = get_clipboard('elements')
         @clipboard_items = Element.all_from_clipboard_for_page(@clipboard, @page)
@@ -39,7 +41,7 @@ module Alchemy
             @element = paste_element_from_clipboard
             @cell = @element.cell
           else
-            @element = Element.new_from_scratch(params[:element])
+            @element = Element.new_from_scratch(create_element_params)
             if @page.can_have_cells?
               @cell = find_or_create_cell
               @element.cell = @cell
@@ -145,7 +147,10 @@ module Alchemy
 
       def paste_element_from_clipboard
         @source_element = Element.find(element_from_clipboard['id'])
-        new_attributes = {page_id: @page.id}
+        new_attributes = {
+          parent_element_id: create_element_params[:parent_element_id],
+          page_id: @page.id
+        }
         if @page.can_have_cells?
           new_attributes = new_attributes.merge({cell_id: find_or_create_cell.try(:id)})
         end
@@ -172,6 +177,10 @@ module Alchemy
         else
           params.fetch(:element, {})
         end
+      end
+
+      def create_element_params
+        params.require(:element).permit(:name, :page_id, :parent_element_id)
       end
     end
   end

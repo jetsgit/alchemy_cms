@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe "The Routing" do
@@ -205,7 +207,7 @@ describe "The Routing" do
 
     context "customized" do
       before(:all) do
-        Alchemy.admin_path = "/backend"
+        Alchemy.admin_path = "backend"
         Alchemy.admin_constraints = {subdomain: "hidden"}
         Rails.application.reload_routes!
       end
@@ -232,7 +234,7 @@ describe "The Routing" do
       end
 
       after(:all) do
-        Alchemy.admin_path = "/admin"
+        Alchemy.admin_path = "admin"
         Alchemy.admin_constraints = {}
         Rails.application.reload_routes!
       end

@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Alchemy
@@ -117,6 +118,45 @@ module Alchemy
         expect(Element.definitions.collect { |el| el['name'] }).to include('erb_element')
       end
 
+      context "with a YAML file including a symbol" do
+        let(:yaml) { '- name: :symbol' }
+
+        before do
+          expect(File).to receive(:exist?).and_return(true)
+          expect(File).to receive(:read).and_return(yaml)
+        end
+
+        it "returns the definition without error" do
+          expect { Element.definitions }.to_not raise_error
+        end
+      end
+
+      context "with a YAML file including a Date" do
+        let(:yaml) { '- default: 2017-12-24' }
+
+        before do
+          expect(File).to receive(:exist?).and_return(true)
+          expect(File).to receive(:read).and_return(yaml)
+        end
+
+        it "returns the definition without error" do
+          expect { Element.definitions }.to_not raise_error
+        end
+      end
+
+      context "with a YAML file including a Regex" do
+        let(:yaml) { "- format: !ruby/regexp '/\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/'" }
+
+        before do
+          expect(File).to receive(:exist?).and_return(true)
+          expect(File).to receive(:read).and_return(yaml)
+        end
+
+        it "returns the definition without error" do
+          expect { Element.definitions }.to_not raise_error
+        end
+      end
+
       context "without existing yml files" do
         before { allow(File).to receive(:exist?).and_return(false) }
 
@@ -126,8 +166,7 @@ module Alchemy
       end
 
       context "without any definitions in elements.yml" do
-        # Yes, YAML.load returns false if an empty file exists.
-        before { allow(YAML).to receive(:load).and_return(false) }
+        before { expect(YAML).to receive(:safe_load).and_return(false) }
 
         it "should return an empty array" do
           expect(Element.definitions).to eq([])
@@ -204,6 +243,17 @@ module Alchemy
         elements = Element.expanded
         expect(elements).to include(element_1)
         expect(elements).to_not include(element_2)
+      end
+    end
+
+    describe '.not_nested' do
+      subject { Element.not_nested }
+
+      let!(:element_1) { create(:alchemy_element) }
+      let!(:element_2) { create(:alchemy_element, :nested) }
+
+      it "returns all not nested elements" do
+        is_expected.to match_array([element_1, element_2.parent_element])
       end
     end
 
@@ -609,51 +659,42 @@ module Alchemy
     end
 
     describe '.after_update' do
-      let(:page)    { create(:alchemy_page) }
       let(:element) { create(:alchemy_element, page: page) }
-      let(:now)     { Time.current }
 
-      before do
-        allow(Time).to receive(:now).and_return(now)
+      let(:page) do
+        create(:alchemy_page).tap do |page|
+          page.update_column(:updated_at, 3.hours.ago)
+        end
+      end
+
+      it "touches the page" do
+        expect { element.save }.to change { page.updated_at }
       end
 
       context 'with touchable pages' do
-        let(:locker)  { mock_model('DummyUser') }
-        let(:pages)   { [page] }
-
-        before do
-          expect(Alchemy.user_class).to receive(:stamper).at_least(:once).and_return(locker.id)
+        let(:touchable_page) do
+          create(:alchemy_page).tap do |page|
+            page.update_column(:updated_at, 3.hours.ago)
+          end
         end
 
-        it "updates page timestamps" do
-          expect(element).to receive(:touchable_pages).and_return(pages)
-          expect(pages).to receive(:update_all).with({updated_at: now, updater_id: locker.id})
-          element.save
-        end
-
-        it "updates page userstamps" do
-          element.save
-          page.reload
-          expect(page.updater_id).to eq(locker.id)
+        it "updates their timestamps" do
+          expect(element).to receive(:touchable_pages) { [touchable_page] }
+          expect { element.save }.to change { touchable_page.updated_at }
         end
       end
 
       context 'with cell associated' do
-        let(:cell) { mock_model('Cell') }
+        let(:element) { create(:alchemy_element, page: page, cell: cell) }
 
-        before do
-          expect(element).to receive(:cell).at_least(:once).and_return(cell)
+        let(:cell) do
+          create(:alchemy_cell).tap do |cell|
+            cell.update_column(:updated_at, 3.hours.ago)
+          end
         end
 
         it "updates timestamp of cell" do
-          expect(element.cell).to receive(:touch)
-          element.save
-        end
-      end
-
-      context 'without cell associated' do
-        it "does not update timestamp of cell" do
-          expect { element.save }.to_not raise_error
+          expect { element.save }.to change { cell.updated_at }
         end
       end
     end
@@ -688,6 +729,31 @@ module Alchemy
           })
           expect(element.taggable?).to be_falsey
         end
+      end
+    end
+
+    describe '#compact?' do
+      subject { element.compact? }
+
+      let(:element) { build(:alchemy_element) }
+
+      before do
+        expect(element).to receive(:definition) { definition }
+      end
+
+      context "definition has 'compact' key with true value" do
+        let(:definition) { {'compact' => true} }
+        it { is_expected.to be(true) }
+      end
+
+      context "definition has 'compact' key with foo value" do
+        let(:definition) { {'compact' => 'foo'} }
+        it { is_expected.to be(false) }
+      end
+
+      context "definition has no 'compact' key" do
+        let(:definition) { {'name' => 'article'} }
+        it { is_expected.to be(false) }
       end
     end
 
@@ -861,6 +927,7 @@ module Alchemy
       let!(:element)        { create(:alchemy_element, name: 'slide', parent_element: parent_element) }
 
       it "touches parent after update" do
+        parent_element.update_column(:updated_at, 3.days.ago)
         expect { element.update!(public: false) }.to change(parent_element, :updated_at)
       end
     end

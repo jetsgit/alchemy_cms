@@ -7,7 +7,7 @@
   <div class="value">
     <label>
       <% if @page.definition.blank? %>
-        <span class="inline warning icon" title="<%= Alchemy.t(:page_definition_missing) %>"></span>
+        <%= page_layout_missing_warning %>
       <% end %>
       <%= Alchemy::Page.human_attribute_name(:page_layout) %>
     </label>
@@ -24,15 +24,28 @@
   </div>
   <div class="value">
     <label><%= Alchemy.t(:page_status) %></label>
-    <p><%= combined_page_status(@page) %></p>
+    <p>
+      <span class="page_status">
+        <%= render_icon(:compass, transform: 'shrink-2', class: @page.public? ? nil : 'disabled') %>
+        <%= @page.status_title(:public) %>
+      </span>
+      <span class="page_status">
+        <%= render_icon(:eye, transform: 'shrink-2', class: @page.visible? ? nil : 'disabled') %>
+        <%= @page.status_title(:visible) %>
+      </span>
+      <span class="page_status">
+        <%= render_icon(:lock, transform: 'shrink-2', class: @page.restricted? ? nil : 'disabled') %>
+        <%= @page.status_title(:restricted) %>
+      </span>
+    </p>
   </div>
   <div class="value">
     <label><%= Alchemy.t(:page_was_created) %></label>
-    <p><%= Alchemy.t(:from_at) % {by: @page.creator_name, at: l(@page.created_at, format: :page_status)} %></p>
+    <p><%= Alchemy.t(:from_at) % {by: @page.creator_name, at: l(@page.created_at, format: :'alchemy.page_status')} %></p>
   </div>
   <div class="value">
     <label><%= Alchemy.t(:page_was_updated) %></label>
-    <p><%= Alchemy.t(:from_at) % {by: @page.updater_name, at: l(@page.updated_at, format: :page_status)} %></p>
+    <p><%= Alchemy.t(:from_at) % {by: @page.updater_name, at: l(@page.updated_at, format: :'alchemy.page_status')} %></p>
   </div>
   <% if @page.locked? %>
   <div class="value">

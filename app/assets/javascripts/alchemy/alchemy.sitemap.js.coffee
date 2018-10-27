@@ -29,13 +29,13 @@ Alchemy.Sitemap =
     self = Alchemy.Sitemap
 
     if foldingId
-      spinner = Alchemy.Spinner.small()
+      spinner = new Alchemy.Spinner('small')
       spinTarget = $('#fold_button_' + foldingId)
       renderTarget = $('#page_' + foldingId)
       renderTemplate = @list_template
       pageId = foldingId
     else
-      spinner = @options.spinner || Alchemy.Spinner.medium()
+      spinner = @options.spinner || new Alchemy.Spinner('medium')
       spinTarget = @sitemap_wrapper
       renderTarget = @sitemap_wrapper
       renderTemplate = @template
@@ -96,6 +96,7 @@ Alchemy.Sitemap =
     @filter_field_clear.click =>
       @search_field.val('')
       filter('')
+      false
 
   # Handles the page publication date fields
   watchPagePublicationState: ->

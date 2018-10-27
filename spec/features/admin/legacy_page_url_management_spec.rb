@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'Legacy page url management', type: :feature, js: true do
@@ -10,9 +11,7 @@ describe 'Legacy page url management', type: :feature, js: true do
 
   def open_page_properties
     visit admin_pages_path
-    within "#page_#{a_page.id}" do
-      click_link Alchemy.t(:edit_page_properties)
-    end
+    page.find("a[href='#{configure_admin_page_path(a_page)}']").click
   end
 
   it "lets a user add a page link" do

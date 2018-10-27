@@ -45,13 +45,17 @@ $.extend Alchemy.Tinymce,
   #   - Editor id that should be initialized.
   #
   initEditor: (id) ->
-    textarea = $("#tinymce_#{id}")
+    editor_id = "tinymce_#{id}"
+    textarea = $("##{editor_id}")
+    editor = tinymce.get(editor_id)
+    # remove editor instance, if already initialized
+    editor.remove() if editor
     if textarea.length == 0
       Alchemy.log_error "Could not initialize TinyMCE for textarea#tinymce_#{id}!"
       return
     config = @getConfig(id, textarea[0].classList[1])
     if config
-      spinner = Alchemy.Spinner.small()
+      spinner = new Alchemy.Spinner('small')
       textarea.closest('.tinymce_container').prepend spinner.spin().el
       tinymce.init(config)
     else
@@ -59,12 +63,18 @@ $.extend Alchemy.Tinymce,
 
   # Gets called after an editor instance gets intialized
   #
-  initInstanceCallback: (inst) ->
-    $this = $("##{inst.id}")
-    parent = $this.closest('.element-editor')
-    parent.find('.spinner').remove()
-    inst.on 'dirty', (e) ->
-      Alchemy.setElementDirty(parent)
+  initInstanceCallback: (editor) ->
+    $this = $("##{editor.id}")
+    element = $this.closest('.element-editor')
+    element.find('.spinner').remove()
+    editor.on 'dirty', ->
+      Alchemy.setElementDirty(element)
+      return
+    editor.on 'click', (event) ->
+      event.target = element[0]
+      Alchemy.ElementEditors.onClickElement(event)
+      return
+    return
 
   # Removes the TinyMCE editor from given dom ids.
   #

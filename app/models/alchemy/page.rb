@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_pages
@@ -16,8 +18,6 @@
 #  parent_id        :integer
 #  depth            :integer
 #  visible          :boolean          default(FALSE)
-#  public           :boolean          default(FALSE)
-#  locked_at        :datetime
 #  locked_by        :integer
 #  restricted       :boolean          default(FALSE)
 #  robot_index      :boolean          default(TRUE)
@@ -33,17 +33,17 @@
 #  published_at     :datetime
 #  public_on        :datetime
 #  public_until     :datetime
+#  locked_at        :datetime
 #
 
 module Alchemy
-  class Page < ActiveRecord::Base
+  class Page < BaseRecord
     include Alchemy::Hints
     include Alchemy::Logger
-    include Alchemy::Touching
+    include Alchemy::Taggable
 
     DEFAULT_ATTRIBUTES_FOR_COPY = {
       do_not_autogenerate: true,
-      do_not_sweep: true,
       visible: false,
       public_on: nil,
       public_until: nil,
@@ -82,12 +82,11 @@ module Alchemy
       :layoutpage
     ]
 
-    acts_as_taggable
     acts_as_nested_set(dependent: :destroy)
 
     stampable stamper_class_name: Alchemy.user_class_name
 
-    belongs_to :language, required: false
+    belongs_to :language, optional: true
 
     has_one :site, through: :language
     has_many :site_languages, through: :site, source: :languages
@@ -98,9 +97,6 @@ module Alchemy
     validates_presence_of :page_layout, unless: :systempage?
     validates_format_of :page_layout, with: /\A[a-z0-9_-]+\z/, unless: -> { systempage? || page_layout.blank? }
     validates_presence_of :parent_id, if: proc { Page.count > 1 }
-
-    attr_accessor :do_not_sweep
-    attr_accessor :do_not_validate_language
 
     before_save :set_language_code,
       if: -> { language.present? },
@@ -118,12 +114,15 @@ module Alchemy
       if: -> { public_on.present? && published_at.nil? },
       unless: :systempage?
 
+    before_save :set_fixed_attributes,
+      if: -> { fixed_attributes.any? }
+
     before_create :set_language_from_parent_or_default,
       if: -> { language_id.blank? },
       unless: :systempage?
 
     after_update :create_legacy_url,
-      if: :urlname_changed?,
+      if: :should_create_legacy_url?,
       unless: :redirects_to_external?
 
     # Concerns
@@ -140,6 +139,15 @@ module Alchemy
     # Class methods
     #
     class << self
+      # The root page of the page tree
+      #
+      # Internal use only. You wouldn't use this page ever.
+      #
+      # Automatically created when accessed the first time.
+      #
+      def root
+        super || create!(name: 'Root')
+      end
       alias_method :rootpage, :root
 
       # Used to store the current page previewed in the edit page template.
@@ -303,19 +311,27 @@ module Alchemy
 
     # Returns the previous page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def previous(options = {})
-      next_or_previous('<', options)
+      pages = self_and_siblings.where('lft < ?', lft)
+      select_page(pages, options.merge(order: :desc))
     end
     alias_method :previous_page, :previous
 
     # Returns the next page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def next(options = {})
-      next_or_previous('>', options)
+      pages = self_and_siblings.where('lft > ?', lft)
+      select_page(pages, options.merge(order: :asc))
     end
     alias_method :next_page, :next
 
@@ -406,28 +422,54 @@ module Alchemy
       update_columns(hash)
     end
 
+    # Holds an instance of +FixedAttributes+
+    def fixed_attributes
+      @_fixed_attributes ||= Alchemy::Page::FixedAttributes.new(self)
+    end
+
+    # True if given attribute name is defined as fixed
+    def attribute_fixed?(name)
+      fixed_attributes.fixed?(name)
+    end
+
+    # Checks the current page's list of editors, if defined.
+    #
+    # This allows us to pass in a user and see if any of their roles are enable
+    # them to make edits
+    #
+    def editable_by?(user)
+      return true unless has_limited_editors?
+      (editor_roles & user.alchemy_roles).any?
+    end
+
+    # Returns the value of +public_on+ attribute
+    #
+    # If it's a fixed attribute then the fixed value is returned instead
+    #
+    def public_on
+      attribute_fixed?(:public_on) ? fixed_attributes[:public_on] : self[:public_on]
+    end
+
+    # Returns the value of +public_until+ attribute
+    #
+    # If it's a fixed attribute then the fixed value is returned instead
+    #
+    def public_until
+      attribute_fixed?(:public_until) ? fixed_attributes[:public_until] : self[:public_until]
+    end
+
     private
 
-    # Returns the next or previous page on the same level or nil.
-    #
-    # @param [String]
-    #   Pass '>' for next and '<' for previous page.
-    #
-    # @option options [Boolean] :restricted (nil)
-    #   only restricted pages (true), skip restricted pages (false)
-    # @option options [Boolean] :public (true)
-    #   only public pages (true), skip public pages (false)
-    #
-    def next_or_previous(dir = '>', options = {})
-      options = {
-        restricted: false,
-        public: true
-      }.update(options)
+    def set_fixed_attributes
+      fixed_attributes.all.each do |attribute, value|
+        send("#{attribute}=", value)
+      end
+    end
 
-      pages = self_and_siblings.where(["#{Page.table_name}.lft #{dir} ?", lft])
-      pages = options[:public] ? pages.published : pages.not_public
-      pages.where(restricted: options[:restricted])
-        .reorder(dir == '>' ? 'lft' : 'lft DESC')
+    def select_page(pages, options = {})
+      pages = options.fetch(:public, true) ? pages.published : pages.not_public
+      pages.where(restricted: options.fetch(:restricted, false))
+        .reorder(lft: options.fetch(:order))
         .limit(1).first
     end
 
@@ -440,9 +482,22 @@ module Alchemy
       self.language_code = language.code
     end
 
+    def should_create_legacy_url?
+      if active_record_5_1?
+        saved_change_to_urlname?
+      else
+        urlname_changed?
+      end
+    end
+
     # Stores the old urlname in a LegacyPageUrl
     def create_legacy_url
-      legacy_urls.find_or_create_by(urlname: urlname_was)
+      if active_record_5_1?
+        former_urlname = urlname_before_last_save
+      else
+        former_urlname = urlname_was
+      end
+      legacy_urls.find_or_create_by(urlname: former_urlname)
     end
 
     def set_published_at

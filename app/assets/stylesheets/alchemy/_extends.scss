@@ -1,7 +1,3 @@
-%rounded-border {
-  border-radius: $default-border-radius;
-}
-
 %text-overflow {
   white-space: nowrap;
   overflow: hidden;
@@ -11,83 +7,43 @@
   -moz-text-overflow: ellipsis;
 }
 
-%tooltip {
-  display: none;
-  background: $light_yellow;
-  @extend %rounded-border;
-  box-shadow: 0 4px 24px $dark-gray;
-  position: absolute;
-  right: -25px;
-  top: 26px;
-  z-index: 100;
-  padding: 8px;
-  line-height: 1.5em;
-  min-width: 180px;
-  font-size: 12px;
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    right: 24px;
-    width: 0px;
-    height: 0px;
-    border-style: solid;
-    border-width: 0 8px 8px 8px;
-    border-color: transparent transparent $light_yellow transparent;
-  }
-}
-
-%thumbnail-background {
-  display: table-cell;
-  background-color: $dark-gray;
-  text-align: center;
-  vertical-align: middle;
-  padding: 0;
-  line-height: 0;
-}
-
 %field-with-error {
   border-color: $error_border_color;
   color: $error_text_color;
   background-color: lighten($error_background_color, 8%);
-  box-shadow: inset 1px 1px 4px rgba($error_border_color, 0.5);
-}
-
-%blue-focus-style {
-  @include default-focus-style;
+  box-shadow: inset 0px 0 1px rgba($error_border_color, 0.5);
 }
 
 %default-input-style {
-  box-sizing: border-box;
-  $border-inset-color: lighten($default-border-color, 20%);
-  @extend %rounded-border;
-  box-shadow: inset 0px 1px 1px $medium-gray;
+  border-radius: $default-border-radius;
+  box-shadow: $form-field-box-shadow;
   font: $default-font-style;
-  padding: 1px 2*$default-padding;
-  margin: $default-form-field-margin;
-  background: rgba(#fff, 0.9);
-  border-top: 1px solid $default-border-color;
-  border-left: 1px solid $default-border-color;
-  border-bottom: 1px solid $border-inset-color;
-  border-right: 1px solid $border-inset-color;
+  color: $form-field-text-color;
+  padding: $form-field-padding;
+  margin: $form-field-margin;
+  background: $form-field-background-color;
+  border-width: $form-field-border-width;
+  border-style: $form-field-border-style;
+  border-color: $form-field-border-color;
+  height: $form-field-height;
   width: 100%;
-  font-size: 12px;
-  line-height: 12px;
-  height: $default-form-field-height;
-  @include transition(
-    box-shadow 0.25s ease-in-out,
-    background-color 0.25s ease-in-out,
-    border 0.25s ease-in-out
-  );
+  font-size: $form-field-font-size;
+  line-height: $form-field-line-height;
+  transition: $transition-duration;
 
   &:focus {
-    @extend %blue-focus-style;
+    @include default-focus-style($box-shadow: 0 0 0 1px $focus-color);
+  }
+
+  &[disabled], .disabled {
+    color: $form-field-disabled-text-color;
+    background-color: $form-field-disabled-bg-color;
+    cursor: not-allowed;
   }
 }
 
 %gradiated-toolbar {
   background: $toolbar-bg-color;
   padding: 8px 4px;
-  height: $default-form-field-height;
+  height: $toolbar-height;
 }

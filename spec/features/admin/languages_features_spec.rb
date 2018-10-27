@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.feature "Admin::LanguagesFeatures", type: :feature do
@@ -23,6 +25,8 @@ RSpec.feature "Admin::LanguagesFeatures", type: :feature do
     end
 
     context "with multiple sites" do
+      let!(:default_site) { create(:alchemy_site, :default) }
+
       let!(:site_2) do
         create(:alchemy_site, host: 'another-site.com')
       end
