@@ -16,16 +16,17 @@ module Alchemy
     has_many :nested_elements
 
     def ingredients
-      ingredient = []
-      if object.definition['nestable_elements']
-        object.nested_elements.each do |elemental|
-          nested_val = elemental.contents.collect(&:serialize)
-          ingredient << nested_val
-        end
-      else
-        ingredient = object.contents.collect(&:serialize)
-      end
-      ingredient
+      object.contents.collect(&:serialize)
+      # ingredient = []
+      # if object.definition['nestable_elements']
+      #   object.nested_elements.each do |elemental|
+      #     nested_val = elemental.contents.collect(&:serialize)
+      #     ingredient << nested_val
+      #   end
+      # else
+      #   ingredient = object.contents.collect(&:serialize)
+      # end
+      # ingredient
     end
   end
 end
