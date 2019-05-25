@@ -29,7 +29,8 @@ redirect_to_public_child: true
 #
 # NOTE: You can enable/disable page caching for single Alchemy::PageLayouts in the page_layout.yml file.
 #
-cache_pages: true
+# cache_pages: true  ...jet
+cache_pages: false
 
 # === Sitemap
 #
