@@ -12,7 +12,7 @@ module Alchemy
       # @elements = Element.accessible_by(current_ability, :index)
 
       # new if...end block for fix
-      if cannot? :manage Alchemy::Element
+      if cannot? :manage, Alchemy::Element
         @elements = Element.accessible_by(current_ability, :index)
       end
 
