@@ -79,13 +79,13 @@ module Alchemy
       :title,
       :urlname,
       :visible,
-      :layoutpage,
-      :lft,
-      :rgt
+      :layoutpage
     ]
 
     acts_as_taggable
     acts_as_nested_set(dependent: :destroy)
+    # jet fix for dumping with seed_dump
+    permit_params: :lft, :rgt
 
     stampable stamper_class_name: Alchemy.user_class_name
 
