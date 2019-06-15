@@ -85,7 +85,7 @@ module Alchemy
     acts_as_taggable
     acts_as_nested_set(dependent: :destroy)
     # jet fix for dumping with seed_dump
-    permit_params :lft, :rgt
+    attr_protected :lft, :rgt
 
     stampable stamper_class_name: Alchemy.user_class_name
 
