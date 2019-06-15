@@ -79,8 +79,8 @@ module Alchemy
       :title,
       :urlname,
       :visible,
-      :layoutpage
-      :lft
+      :layoutpage,
+      :lft,
       :rgt
     ]
 
