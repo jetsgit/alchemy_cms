@@ -80,6 +80,8 @@ module Alchemy
       :urlname,
       :visible,
       :layoutpage
+      :lft
+      :rgt
     ]
 
     acts_as_taggable
